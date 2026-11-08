@@ -784,7 +784,7 @@ async function copyText(text) {
 }
 
 /* ---------- Shell + routing ---------- */
-const ROUTES = ['dashboard', 'orders', 'quotes', 'packages', 'bookings', 'clients', 'branding', 'builder', 'team'];
+const ROUTES = ['dashboard', 'orders', 'quotes', 'packages', 'contracts', 'bookings', 'clients', 'suppliers', 'branding', 'builder', 'team'];
 function applyBrand() {
   const root = document.documentElement;
   root.style.setProperty('--brand', S.brand.color || '#0E7C74');
@@ -796,6 +796,7 @@ function renderShell() {
   const open = S.quotes.filter(q => ['sent', 'viewed', 'accepted'].includes(q.status)).length;
   const cloud = Cloud.on;
   const nav = [['dashboard', 'dashboard', t('nav_dashboard')], ['orders', 'chat', t('nav_orders'), (typeof opsStaffCount === 'function' ? opsStaffCount() : 0)], ['quotes', 'file', t('nav_quotes'), open], ['packages', 'box', t('nav_packages')], ['bookings', 'wallet', t('nav_bookings')], ['clients', 'users', t('nav_clients')],
+    ...(cloud && typeof window.extraNav === 'function' ? window.extraNav() : []),
     can('brand') ? ['branding', 'brush', t('nav_branding')] : null, cloud && can('team') ? ['team', 'user', t('nav_team')] : null].filter(Boolean);
   const trialLeft = cloud && S.agency && S.agency.plan === 'trial' ? daysBetween(today(), S.agency.trialEnds) : null;
   $('#app').innerHTML = `
@@ -832,11 +833,12 @@ function route() {
   if (v === 'branding' && !can('brand')) v = 'dashboard';
   if (v === 'team' && !(Cloud.on && can('team'))) v = 'dashboard';
   if (v === 'team' && S.ui.view !== 'team') TEAM = null;
+  if ((v === 'contracts' || v === 'suppliers') && !(Cloud.on && window.EXTRA_VIEWS && window.EXTRA_VIEWS[v])) v = 'dashboard';
   S.ui.view = v;
   $$('.nav button').forEach(b => b.classList.toggle('on', b.dataset.v === (v === 'builder' ? 'quotes' : v)));
   $('#side').classList.remove('open');
   const view = $('#view');
-  view.innerHTML = `<div class="view-inner">${({ dashboard: vDashboard, orders: vOrders, quotes: vQuotes, packages: vPackages, bookings: vBookings, clients: vClients, branding: vBranding, builder: vBuilder, team: vTeam })[v]()}</div>`;
+  view.innerHTML = `<div class="view-inner">${({ dashboard: vDashboard, orders: vOrders, quotes: vQuotes, packages: vPackages, bookings: vBookings, clients: vClients, branding: vBranding, builder: vBuilder, team: vTeam, ...(window.EXTRA_VIEWS || {}) })[v]()}</div>`;
   view.scrollTop = 0;
   if (v === 'builder') afterBuilder();
   if (v !== 'orders' && typeof opsLoad === 'function') opsLoad();
