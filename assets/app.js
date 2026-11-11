@@ -1667,6 +1667,10 @@ const Cloud = {
       const nm = (user.user_metadata && user.user_metadata.name) || null;
       if (!mem) { await this.rpc('accept_invites', { p_member_name: nm }); mem = await this.membership(); }
       if (!mem) {
+        let pp = null; try { pp = await this.rpc('partner_me', { p_name: nm }); } catch (e) { }
+        if (pp && pp.partner_id) { window.WJ_PARTNER_PENDING = pp; if (window.WJ_startPortal) window.WJ_startPortal(pp); else $('#app').innerHTML = '<p class="muted" style="padding:40px;text-align:center">Loading…</p>'; return; }
+      }
+      if (!mem) {
         const pend = pendingAgency(user.email);
         if (!pend) { renderAuth('agency'); return; }
         await this.createAgency(pend.name, pend.nameAr, nm);
