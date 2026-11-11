@@ -122,7 +122,12 @@ function quoteResort(p,req,today){
 function quote(row,req,today){
   let p=row.data;if(typeof p==='string'){try{p=JSON.parse(p)}catch{return {ok:false,reason:'bad_json'}}}
   const res=p.kind==='resort'?quoteResort(p,req,today):quoteFixed(p,req,today);
-  if(res.ok)for(const o of res.options){o.sell=applyMargin(o.net,row);o.currency=p.currency||row.currency||'USD';}
+  const tx=(!p.rates_include_tax&&Array.isArray(p.taxes))?p.taxes.filter(x=>x&&+x.pct>0):[];
+  if(res.ok)for(const o of res.options){
+    let tax=0;
+    if(tx.length){const simple=tx.filter(x=>!x.compound).reduce((a,x)=>a+o.net*(+x.pct)/100,0);const comp=tx.filter(x=>x.compound).reduce((a,x)=>a+(o.net+simple)*(+x.pct)/100,0);tax=r2(simple+comp);}
+    o.tax=tax;o.net_with_tax=r2(o.net+tax);o.sell=r2(applyMargin(o.net,row)+tax);o.currency=p.currency||row.currency||'USD';
+  }
   res.title=p.title||row.title;res.package_id=row.package_id;res.kind=p.kind;res.inclusions=p.inclusions||[];
   return res;
 }
@@ -137,7 +142,7 @@ return {quote,band,D,ISO};
     ctUpload: ['Upload contract', 'رفع عقد'], ctReading: ['Reading the contract… this can take up to a minute', 'جاري قراءة العقد… قد يستغرق حتى دقيقة'],
     ctEmpty: ['No contracts yet. Upload your first PDF or Excel contract.', 'لا توجد عقود بعد. ارفع أول عقد PDF أو Excel.'],
     ctTitle: ['Title', 'العنوان'], ctDest: ['Destination', 'الوجهة'], ctKind: ['Type', 'النوع'], ctValidity: ['Validity', 'الصلاحية'], ctBookBy: ['Book by', 'آخر موعد للحجز'],
-    ctMargin: ['Your margin', 'هامش الربح'], ctNoMargin: ['No margin — net price!', 'بدون ربح — سعر نت!'], ctMarginHint: ['Added on top of the contract net price before the agent shows it to the customer.', 'يُضاف فوق سعر النت في العقد قبل ما يعرضه الوكيل للعميل.'], ctZeroQ: ['Margin is 0 — the agent would show the net contract price. Approve anyway?', 'هامش الربح 0 — الوكيل سيعرض سعر النت من العقد. تعتمد رغم ذلك؟'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
+    ctMargin: ['Your margin', 'هامش الربح'], ctTaxes: ['Taxes', 'الضرائب'], ctTaxIncl: ['Contract prices already include taxes', 'أسعار العقد شاملة الضرائب'], ctTaxName: ['Tax name', 'اسم الضريبة'], ctTaxComp: ['Charged on price + taxes above', 'تُحسب على السعر + الضرائب اللي قبلها'], ctTaxAdd: ['Add tax', 'إضافة ضريبة'], ctTaxHint: ['Added to the cost and shown to the customer. Your margin is calculated on the price before tax.', 'تُضاف على التكلفة وتظهر للعميل. هامش ربحك يُحسب على السعر قبل الضريبة.'], ctTax: ['Taxes', 'الضرائب'], ctNoMargin: ['No margin — net price!', 'بدون ربح — سعر نت!'], ctMarginHint: ['Added on top of the contract net price before the agent shows it to the customer.', 'يُضاف فوق سعر النت في العقد قبل ما يعرضه الوكيل للعميل.'], ctZeroQ: ['Margin is 0 — the agent would show the net contract price. Approve anyway?', 'هامش الربح 0 — الوكيل سيعرض سعر النت من العقد. تعتمد رغم ذلك؟'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
     kind_resort: ['Resort contract (per night)', 'عقد منتجع (بالليلة)'], kind_fixed_program: ['Full program (fixed price)', 'برنامج كامل (سعر ثابت)'],
     cst_draft: ['Draft', 'مسودة'], cst_approved: ['Approved', 'معتمد'], cst_stopped: ['Stopped', 'موقوف'], cst_archived: ['Archived', 'مؤرشف'],
     mPercent: ['% of cost', '% من التكلفة'], mFixed: ['Fixed amount per booking', 'مبلغ ثابت لكل حجز'],
@@ -306,6 +311,11 @@ return {quote,band,D,ISO};
         <div class="f"><label for="cr-bookby">${t('ctBookBy')}</label><input id="cr-bookby" type="date" value="${esc(c.book_by || '')}"></div>
         <div class="f"><label for="cr-mt">${t('ctMargin')}</label><div class="row" style="gap:6px"><select id="cr-mt"><option value="percent" ${c.margin_type !== 'fixed' ? 'selected' : ''}>${t('mPercent')}</option><option value="fixed" ${c.margin_type === 'fixed' ? 'selected' : ''}>${t('mFixed')}</option></select><input id="cr-mv" type="number" step="any" value="${esc(String(c.margin_value ?? 0))}" style="max-width:110px"></div></div>
       </div>
+      <div class="card flat" style="margin-top:12px"><b>${t('ctTaxes')}</b><p class="small muted" style="margin:4px 0 8px">${t('ctTaxHint')}</p>
+        <label class="row small" style="gap:6px;margin-bottom:8px"><input type="checkbox" id="cr-taxincl" ${d.rates_include_tax ? 'checked' : ''}> ${t('ctTaxIncl')}</label>
+        <div id="cr-taxes">${(Array.isArray(d.taxes) && d.taxes.length ? d.taxes : [{ name: '', pct: '' }]).map(taxRow).join('')}</div>
+        <button class="btn ghost sm" data-act="ctTaxAdd">${ic('plus', 'sm')} ${t('ctTaxAdd')}</button>
+      </div>
       ${summary(d)}
       <div class="card flat" style="margin-top:14px"><b>${t('ctTest')}</b>
         <div class="grid g3" style="margin-top:8px">
@@ -322,15 +332,21 @@ return {quote,band,D,ISO};
        <button class="btn" data-act="ctSave" data-st="${c.status === 'approved' ? 'stopped' : 'draft'}">${c.status === 'approved' ? t('ctStop') : t('ctSaveDraft')}</button>
        <button class="btn primary" data-act="ctSave" data-st="approved">${ic('check', 'sm')} ${t('ctApprove')}</button>`, { wide: true });
   }
+  function taxRow(x) {
+    return `<div class="row ct-tax" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input class="inp ct-tn" placeholder="${t('ctTaxName')}" value="${esc(x.name || '')}" style="max-width:200px"><div class="row" style="gap:4px"><input class="inp ct-tp" type="number" min="0" step="any" value="${esc(String(x.pct ?? ''))}" style="max-width:90px">%</div><label class="row small" style="gap:4px"><input type="checkbox" class="ct-tc" ${x.compound ? 'checked' : ''}> ${t('ctTaxComp')}</label></div>`;
+  }
   function collect() {
     let data; try { data = JSON.parse($('#cr-json').value); } catch (e) { toast(t('ctBadJson')); return null; }
     const v = id => { const x = $('#' + id).value.trim(); return x || null; };
     data.kind = $('#cr-kind').value;
+    data.rates_include_tax = !!($('#cr-taxincl') || {}).checked;
+    data.taxes = $$('.ct-tax').map(r => ({ name: r.querySelector('.ct-tn').value.trim(), pct: Number(r.querySelector('.ct-tp').value) || 0, compound: r.querySelector('.ct-tc').checked })).filter(x => x.pct > 0);
     return Object.assign({}, CTD, { title: v('cr-title') || 'Contract', destination: v('cr-dest') || '', kind: data.kind, currency: (v('cr-cur') || 'USD').toUpperCase(),
       valid_from: v('cr-from'), valid_to: v('cr-to'), book_by: v('cr-bookby'), margin_type: $('#cr-mt').value, margin_value: Number($('#cr-mv').value) || 0, data });
   }
 
   Object.assign(ACT, {
+    ctTaxAdd: () => { const box = $('#cr-taxes'); if (box) box.insertAdjacentHTML('beforeend', taxRow({ name: '', pct: '' })); },
     ctMarginDlg: el => {
       const c = (CT || []).find(x => x.id === el.dataset.id); if (!c) return;
       modal(t('ctMargin') + ' · ' + c.title, `<p class="small muted">${t('ctMarginHint')}</p>
@@ -359,7 +375,7 @@ return {quote,band,D,ISO};
       if (!res.ok) { box.innerHTML = `<span style="color:var(--bad)">${t('reason_' + res.reason)}</span>`; return; }
       box.innerHTML = res.options.slice(0, 5).map(o => `<div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line);padding:6px 0;gap:10px">
         <div><b>${esc(o.label)}</b>${o.breakdown ? `<div class="muted">${Object.entries(o.breakdown).filter(([, v]) => v).map(([k, v]) => esc(k) + ' ' + fmt(v, '')).join(' · ')}</div>` : ''}${o.needs_staff_children ? `<div style="color:var(--warn)">children price: staff</div>` : ''}</div>
-        <div style="text-align:end;white-space:nowrap"><div class="muted">${t('ctNet')} ${fmt(o.net, o.currency)}</div><b>${t('ctSell')} ${fmt(o.sell, o.currency)}</b></div></div>`).join('');
+        <div style="text-align:end;white-space:nowrap"><div class="muted">${t('ctNet')} ${fmt(o.net, o.currency)}</div>${o.tax ? `<div class="muted">${t('ctTax')} ${fmt(o.tax, o.currency)}</div>` : ''}<b>${t('ctSell')} ${fmt(o.sell, o.currency)}</b></div></div>`).join('');
     },
     ctSave: async el => {
       const c0 = el.dataset.ok && ACT._ctPending ? ACT._ctPending : collect(); ACT._ctPending = null; if (!c0) return;
