@@ -48,7 +48,7 @@
   .oc-days small{font-size:10px;color:var(--muted)}
   .oc-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}`;
   document.head.appendChild(css);
-  const applySkin = () => { try { document.documentElement.dataset.skin = (S && S.brand && S.brand.theme === 'classic') ? 'classic' : ''; } catch (e) { } };
+  const applySkin = () => { try { document.documentElement.dataset.skin = (S && S.brand && S.brand.theme === 'modern') ? '' : 'classic'; } catch (e) { } };
   applySkin();
   const _applyBrand = window.applyBrand;
   if (typeof applyBrand === 'function') { try { const orig = applyBrand; window.applyBrand = function () { const r = orig.apply(this, arguments); applySkin(); return r; }; } catch (e) { } }
@@ -81,7 +81,7 @@
     const issues = opsOrders().filter(whyOf).length;
     return `<div class="oc-tabs" role="tablist">${items.map(k => `<button role="tab" aria-selected="${OC.tab === k}" class="${OC.tab === k ? 'on' : ''}" data-act="ocTab" data-v="${k}">${t('oc_tab_' + k)}${k === 'issues' && issues ? ` · ${issues}` : ''}</button>`).join('')}
       <button data-act="ocExport">${ic('download', 'sm')} ${t('oc_export')}</button>
-      ${can('brand') ? `<button data-act="ocSkin" aria-pressed="${S.brand.theme === 'classic'}" class="${S.brand.theme === 'classic' ? 'on' : ''}">${t('oc_classic')}</button>` : ''}</div>`;
+      ${can('brand') ? `<button data-act="ocSkin" aria-pressed="${S.brand.theme !== 'modern'}" class="${S.brand.theme !== 'modern' ? 'on' : ''}">${t('oc_classic')}</button>` : ''}</div>`;
   }
   const periodChips = () => `<div class="chips">${[[7, 'oc_p7'], [30, 'oc_p30'], [0, 'oc_pall']].map(([v, k]) => `<button class="chip ${OC.period === v ? 'on' : ''}" data-act="ocPeriod" data-v="${v}">${t(k)}</button>`).join('')}</div>`;
 
@@ -158,7 +158,7 @@
   Object.assign(ACT, {
     ocTab: el => { OC.tab = el.dataset.v; route(); },
     ocPeriod: el => { OC.period = Number(el.dataset.v); route(); },
-    ocSkin: () => { S.brand.theme = S.brand.theme === 'classic' ? '' : 'classic'; applySkin(); save(); route(); },
+    ocSkin: () => { S.brand.theme = S.brand.theme === 'modern' ? 'classic' : 'modern'; applySkin(); save(); route(); },
     ocExport: () => {
       const cols = ['request_id', 'sender', 'status', 'hotel', 'city', 'checkin', 'checkout', 'amount_sar', 'trip_id', 'request_text', 'updated_at'];
       const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""').replace(/\r?\n/g, ' ') + '"';

@@ -2477,13 +2477,13 @@ const dspCityName = k => k.replace(/\b\w/g, m => m.toUpperCase());
 function dspMapCard() {
   if (!window.LeafletLib) return '';
   return `<div class="card" style="padding:12px 14px"><div class="row between"><div><b>${t('dp_mapTitle')}</b><div class="tiny muted">${t('dp_mapHint')}</div></div></div>
-    <div id="dsp-map" style="height:300px;border-radius:12px;margin-top:10px;overflow:hidden"></div></div>`;
+    <div id="dsp-map" style="height:360px;border-radius:12px;margin-top:10px;overflow:hidden"></div></div>`;
 }
 function dspDrawMap(orders) {
   const el = document.getElementById('dsp-map'); const LL = window.LeafletLib; if (!el || !LL) return;
   if (!DSP.map || DSP.map.getContainer() !== el) {
-    DSP.map = LL.map(el, { zoomControl: true, attributionControl: true, worldCopyJump: true }).setView([25, 45], 3);
-    LL.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(DSP.map);
+    DSP.map = LL.map(el, { zoomControl: true, attributionControl: true, worldCopyJump: true }).setView([24, 48], 3);
+    LL.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap contributors © CARTO' }).addTo(DSP.map);
     DSP.layer = LL.layerGroup().addTo(DSP.map);
   }
   DSP.layer.clearLayers();
