@@ -144,7 +144,7 @@ return {quote,band,D,ISO};
     ctUpload: ['Upload contract', 'رفع عقد'], ctReading: ['Reading the contract… this can take up to a minute', 'جاري قراءة العقد… قد يستغرق حتى دقيقة'],
     ctEmpty: ['No contracts yet. Upload your first PDF or Excel contract.', 'لا توجد عقود بعد. ارفع أول عقد PDF أو Excel.'],
     ctTitle: ['Title', 'العنوان'], ctDest: ['Destination', 'الوجهة'], ctKind: ['Type', 'النوع'], ctValidity: ['Validity', 'الصلاحية'], ctBookBy: ['Book by', 'آخر موعد للحجز'],
-    ctMargin: ['Your margin', 'هامش الربح'], cst_pending: ['Waiting for review', 'بانتظار المراجعة'], reason_stop_sale: ['Stop sale on these dates', 'إيقاف بيع في هذه التواريخ'], ctStop2: ['Stop sale / closed dates', 'إيقاف البيع / أيام مقفولة'], ctStopHint: ['No bookings are offered on these dates.', 'لا يُعرض أي حجز في هذه التواريخ.'], ctStopAdd: ['Add dates', 'إضافة تواريخ'], ctStopNote: ['Note', 'ملاحظة'], ctSubmit: ['Submit for review', 'إرسال للمراجعة'], ctSaveStop: ['Save stop sale', 'حفظ إيقاف البيع'], ctPartner: ['Partner', 'الشريك'], ctSubmitted: ['Sent. The agency reviews it before the agent uses it.', 'تم الإرسال. الشركة تراجعه قبل ما الوكيل يستخدمه.'], ctTaxes: ['Taxes', 'الضرائب'], ctTaxIncl: ['Contract prices already include taxes', 'أسعار العقد شاملة الضرائب'], ctTaxName: ['Tax name', 'اسم الضريبة'], ctTaxComp: ['Charged on price + taxes above', 'تُحسب على السعر + الضرائب اللي قبلها'], ctTaxAdd: ['Add tax', 'إضافة ضريبة'], ctTaxHint: ['Added to the cost; your margin is then calculated on the price including taxes.', 'تُضاف على سعر التكلفة، وبعدها يُحسب هامش ربحك على السعر شامل الضرائب.'], ctTax: ['Taxes', 'الضرائب'], ctNoMargin: ['No margin — net price!', 'بدون ربح — سعر نت!'], ctMarginHint: ['Added on top of the contract net price before the agent shows it to the customer.', 'يُضاف فوق سعر النت في العقد قبل ما يعرضه الوكيل للعميل.'], ctZeroQ: ['Margin is 0 — the agent would show the net contract price. Approve anyway?', 'هامش الربح 0 — الوكيل سيعرض سعر النت من العقد. تعتمد رغم ذلك؟'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
+    ctMargin: ['Your margin', 'هامش الربح'], rq_title: ['Booking requests from contracts', 'طلبات حجز من العقود'], rq_sub: ['Customers who chose a contract offer on WhatsApp and sent their names. Confirm availability, then send the confirmation and payment link.', 'عملاء اختاروا عرض من عقد على الواتساب وأرسلوا الأسماء. أكّد التوافر، ثم أرسل التأكيد ورابط الدفع.'], rq_new: ['New', 'جديد'], rq_confirmed: ['Confirmed', 'مؤكد'], rq_cancelled: ['Cancelled', 'ملغي'], rq_partnerOk: ['Partner confirmed', 'الشريك أكّد'], rq_partnerNo: ['Partner: not available', 'الشريك: غير متاح'], rq_confirm: ['Confirm', 'تأكيد'], rq_cancel: ['Cancel', 'إلغاء'], rq_customer: ['Customer', 'العميل'], ppDatesA: ['Dates · guests', 'التواريخ · الضيوف'], cst_pending: ['Waiting for review', 'بانتظار المراجعة'], reason_stop_sale: ['Stop sale on these dates', 'إيقاف بيع في هذه التواريخ'], ctStop2: ['Stop sale / closed dates', 'إيقاف البيع / أيام مقفولة'], ctStopHint: ['No bookings are offered on these dates.', 'لا يُعرض أي حجز في هذه التواريخ.'], ctStopAdd: ['Add dates', 'إضافة تواريخ'], ctStopNote: ['Note', 'ملاحظة'], ctSubmit: ['Submit for review', 'إرسال للمراجعة'], ctSaveStop: ['Save stop sale', 'حفظ إيقاف البيع'], ctPartner: ['Partner', 'الشريك'], ctSubmitted: ['Sent. The agency reviews it before the agent uses it.', 'تم الإرسال. الشركة تراجعه قبل ما الوكيل يستخدمه.'], ctTaxes: ['Taxes', 'الضرائب'], ctTaxIncl: ['Contract prices already include taxes', 'أسعار العقد شاملة الضرائب'], ctTaxName: ['Tax name', 'اسم الضريبة'], ctTaxComp: ['Charged on price + taxes above', 'تُحسب على السعر + الضرائب اللي قبلها'], ctTaxAdd: ['Add tax', 'إضافة ضريبة'], ctTaxHint: ['Added to the cost; your margin is then calculated on the price including taxes.', 'تُضاف على سعر التكلفة، وبعدها يُحسب هامش ربحك على السعر شامل الضرائب.'], ctTax: ['Taxes', 'الضرائب'], ctNoMargin: ['No margin — net price!', 'بدون ربح — سعر نت!'], ctMarginHint: ['Added on top of the contract net price before the agent shows it to the customer.', 'يُضاف فوق سعر النت في العقد قبل ما يعرضه الوكيل للعميل.'], ctZeroQ: ['Margin is 0 — the agent would show the net contract price. Approve anyway?', 'هامش الربح 0 — الوكيل سيعرض سعر النت من العقد. تعتمد رغم ذلك؟'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
     kind_resort: ['Resort contract (per night)', 'عقد منتجع (بالليلة)'], kind_fixed_program: ['Full program (fixed price)', 'برنامج كامل (سعر ثابت)'],
     cst_draft: ['Draft', 'مسودة'], cst_approved: ['Approved', 'معتمد'], cst_stopped: ['Stopped', 'موقوف'], cst_archived: ['Archived', 'مؤرشف'],
     mPercent: ['% of cost', '% من التكلفة'], mFixed: ['Fixed amount per booking', 'مبلغ ثابت لكل حجز'],
@@ -186,12 +186,14 @@ return {quote,band,D,ISO};
   let CT = null, SP = null, CTD = null; // CTD = contract being reviewed
   const PM = () => !!window.WJ_PARTNER;
   let PN = {}; // partner id -> name (agency side)
+  let PRQ = [];
   async function loadContracts() {
     if (PM()) { try { CT = await Cloud.rpc('partner_contracts'); } catch (e) { CT = []; } if (S.ui.view === 'contracts') rerenderSafe(); return; }
     const [{ data, error }, pr] = await Promise.all([
       Cloud.sb.from('package_contracts').select('*').eq('agency_id', Cloud.agencyId).neq('status', 'archived').order('updated_at', { ascending: false }),
       Cloud.sb.from('partners').select('id,name').eq('agency_id', Cloud.agencyId)]);
     PN = {}; ((pr && pr.data) || []).forEach(x => PN[x.id] = x.name);
+    try { const rq = await Cloud.sb.from('package_requests').select('*').eq('agency_id', Cloud.agencyId).order('created_at', { ascending: false }).limit(30); PRQ = rq.error ? [] : (rq.data || []); } catch (e) { PRQ = []; }
     CT = error ? [] : (data || []);
     CT.sort((a, b) => (a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1));
     if (S.ui.view === 'contracts') rerenderSafe();
@@ -222,10 +224,23 @@ return {quote,band,D,ISO};
     }).join('');
     return `
     <div class="head"><div><h1>${t('nav_contracts')}</h1><p>${t('ctSub')}</p></div><button class="btn primary" data-act="ctUploadDlg">${ic('upload', 'sm')} ${t('ctUpload')}</button></div>
+    ${PM() ? '' : reqCard()}
     ${CT.length ? `<div class="card" style="padding:4px 6px"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('ctTitle')}</th><th>${t('ctDest')}</th><th>${t('ctKind')}</th><th>${t('ctValidity')}</th><th>${t('ctBookBy')}</th>${PM() ? '' : `<th>${t('ctMargin')}</th>`}<th>${t('ctStatus')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`
       : `<div class="card"><p class="muted">${t('ctEmpty')}</p></div>`}`;
   }
 
+  function reqCard() {
+    if (!PRQ.length) return '';
+    const st = r => r.status === 'confirmed' ? `<span class="pill st-confirmed">${t('rq_confirmed')}</span>` : r.status === 'cancelled' ? `<span class="pill st-lost">${t('rq_cancelled')}</span>` : r.partner_status === 'confirmed' ? `<span class="pill st-confirmed">${t('rq_partnerOk')}</span>` : r.partner_status === 'rejected' ? `<span class="pill st-lost">${t('rq_partnerNo')}</span>` : `<span class="pill st-sent">${t('rq_new')}</span>`;
+    const rows = PRQ.map(r => { const q = r.quote || {}; const g = (r.guests || []).map(x => x.name || x).join('، ');
+      return `<tr><td><b>${esc(r.ref || '')}</b><div class="small muted">${esc((r.created_at || '').slice(0, 16).replace('T', ' '))}</div></td>
+        <td>${esc(q.hotel || '')}<div class="small muted">${esc(q.label || '')}${r.partner_id && PN[r.partner_id] ? ' · ' + esc(PN[r.partner_id]) : ''}</div></td>
+        <td class="small">${esc(q.checkin || '')} → ${esc(q.checkout || '')}<div class="muted">${esc(g)}</div></td>
+        <td class="small"><a href="https://wa.me/${esc(r.customer_phone || '')}" target="_blank" rel="noopener">+${esc(r.customer_phone || '')}</a></td>
+        <td class="small"><b>${fmt(r.total, r.currency)}</b>${r.net_total ? `<div class="muted">${t('ctNet')} ${fmt(r.net_total, r.currency)}</div>` : ''}${r.partner_conf_no ? `<div>#${esc(r.partner_conf_no)}</div>` : ''}</td>
+        <td>${st(r)}${r.status === 'new' ? `<div class="row" style="gap:4px;margin-top:6px"><button class="btn sm" data-act="rqSet" data-id="${r.id}" data-st="cancelled">${t('rq_cancel')}</button><button class="btn primary sm" data-act="rqSet" data-id="${r.id}" data-st="confirmed">${t('rq_confirm')}</button></div>` : ''}</td></tr>`; }).join('');
+    return `<div class="card" style="padding:10px 12px;margin-bottom:14px"><b>${t('rq_title')}</b><p class="small muted" style="margin:4px 0 8px">${t('rq_sub')}</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>#</th><th>${t('ctTitle')}</th><th>${t('ppDatesA')}</th><th>${t('rq_customer')}</th><th>${t('ctSell')}</th><th>${t('ctStatus')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
   /* file → text (PDF via pdf.js, Excel via SheetJS) */
   const loadScript = src => new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
   async function fileToText(file) {
@@ -366,6 +381,7 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
   }
 
   Object.assign(ACT, {
+    rqSet: async el => { const { error } = await Cloud.sb.from('package_requests').update({ status: el.dataset.st, updated_at: new Date().toISOString() }).eq('id', el.dataset.id); if (error) return toast(friendlyErr(error)); toast(t('saved')); CT = null; loadContracts(); },
     ctStopAdd: () => { const box = $('#cr-stops'); if (box) box.insertAdjacentHTML('beforeend', stopRow({})); },
     ctStopDel: el => { const r = el.closest('.ct-stop'); if (r) r.remove(); },
     ctSaveStops: async () => { try { await Cloud.rpc('partner_set_stop_sales', { p_id: CTD.id, p_stop_sales: readStops() }); toast(t('saved')); closeModal(); CT = null; loadContracts(); } catch (e) { toast(friendlyErr(e)); } },
