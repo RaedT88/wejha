@@ -29,9 +29,11 @@
     ppStatementSub: ['Confirmed bookings and the net amounts {a} owes you.', 'الحجوزات المؤكدة والمبالغ (نت) المستحقة لك من {a}.'], ppNoConf: ['No confirmed bookings yet.', 'لا توجد حجوزات مؤكدة بعد.'],
     ppBkSub: ['Bookings {a} made on your contracts. Confirm each with your confirmation number.', 'حجوزات {a} على عقودك. أكّد كل حجز برقم التأكيد.'],
     ppF_awaiting: ['To confirm', 'بانتظار التأكيد'], ppF_confirmed: ['Confirmed', 'مؤكدة'], ppF_rejected: ['Not available', 'غير متاحة'], ppF_all: ['All', 'الكل'],
+    ppAvailable: ['Available', 'متاح'], ppAvailState: ['Available — send the confirmation number', 'متاح — أرسل رقم التأكيد'], ppSendConf: ['Send confirmation number', 'إرسال رقم التأكيد'], ppNoteAlt: ['Note or alternative (optional)', 'ملاحظة أو بديل (اختياري)'], ppAvailHint: ['Tap Available as soon as you can hold the room; add the hotel confirmation number later.', 'اضغط متاح أول ما تقدر تثبّت الغرفة، وأضف رقم تأكيد الفندق بعدين.'],
     ppConfNeed: ['Enter the confirmation number.', 'اكتب رقم التأكيد.'], ppDone: ['Sent to {a}', 'تم الإرسال إلى {a}'], ppFlights: ['Flights', 'الطيران'], ppDates: ['Dates', 'التواريخ']
   };
   for (const k in AR) { I18N.en[k] = AR[k][0]; I18N.ar[k] = AR[k][1]; }
+  const ALERT_URL = 'https://luxecheck-ai.app.n8n.cloud/webhook/wejha-partner-update';
   const appUrl = () => location.origin + '/';
 
   /* ================= agency side: Partners page ================= */
@@ -194,14 +196,14 @@
         ${byM[k].map(r => `<tr><td class="small">${esc(r.ref || '')}</td><td>${esc(r.contract || '')}</td><td class="small">${esc(r.checkin || '')} → ${esc(r.checkout || '')}</td><td class="small">${esc(r.partner_conf_no || '')}</td><td><b>${fmtN(r.net_total, r.currency)}</b></td></tr>`).join('')}</tbody></table></div></div>`).join('') || `<div class="card"><p class="muted">${t('ppNoConf')}</p></div>`}`;
   }
   async function loadBk() { if (loadBk.busy) return; loadBk.busy = true; try { BK = await Cloud.rpc('partner_requests'); } catch (e) { BK = []; } loadBk.busy = false; const c = $('#side .nav button[data-v="bookings"]'); if (c) shell(); }
-  const pst = s => s === 'confirmed' ? `<span class="pill st-confirmed">${t('ppConfirmed')}</span>` : s === 'rejected' ? `<span class="pill st-lost">${t('ppRejected')}</span>` : `<span class="pill st-sent">${t('ppAwaiting')}</span>`;
+  const pst = s => s === 'available' ? `<span class="pill st-sent">${t('ppAvailState')}</span>` : s === 'confirmed' ? `<span class="pill st-confirmed">${t('ppConfirmed')}</span>` : s === 'rejected' ? `<span class="pill st-lost">${t('ppRejected')}</span>` : `<span class="pill st-sent">${t('ppAwaiting')}</span>`;
   function vBookingsP() {
     if (!BK) return `<div class="head"><div><h1>${t('ppBookings')}</h1></div></div><p class="muted">${t('loading')}</p>`;
     const F = S.ui.ppF || 'awaiting';
-    const list = BK.filter(r => F === 'all' || (F === 'awaiting' ? (!r.partner_status || r.partner_status === 'awaiting') : r.partner_status === F));
+    const list = BK.filter(r => F === 'all' || (F === 'awaiting' ? (!r.partner_status || r.partner_status === 'awaiting' || r.partner_status === 'available') : r.partner_status === F));
     const rows = list.map(r => {
       const g = Array.isArray(r.guests) ? r.guests.map(x => typeof x === 'string' ? x : [x.title, x.first_name || x.first, x.last_name || x.last].filter(Boolean).join(' ') || x.name || '').filter(Boolean).join('، ') : '';
-      const open = !r.partner_status || r.partner_status === 'awaiting';
+      const open = !r.partner_status || r.partner_status === 'awaiting', avail = r.partner_status === 'available';
       return `<div class="card" style="margin-bottom:10px"><div class="row between" style="gap:10px;flex-wrap:wrap">
         <div><b>${esc(r.contract || '')}</b> ${r.ref ? `<span class="tiny muted">#${esc(r.ref)}</span>` : ''}
           <div class="small">${t('ppDates')}: ${esc(r.checkin || '')} → ${esc(r.checkout || '')}${r.option ? ' · ' + esc(r.option) : ''}${r.rooms ? ' · ' + esc(r.rooms) : ''}</div>
@@ -209,11 +211,14 @@
           ${r.net_total ? `<div class="small" style="margin-top:4px">${t('ppNet')}: <b>${fmtN(r.net_total, r.currency)}</b></div>` : ''}
           ${r.partner_conf_no ? `<div class="small">${t('ppConfNo')}: <b>${esc(r.partner_conf_no)}</b></div>` : ''}${r.partner_note ? `<div class="small muted">${esc(r.partner_note)}</div>` : ''}</div>
         <div style="text-align:end">${pst(r.partner_status)}
-          ${open ? `<div class="stack" style="gap:6px;margin-top:8px;min-width:220px"><input class="inp" id="cf-${r.id}" placeholder="${t('ppConfNo')}"><input class="inp" id="nt-${r.id}" placeholder="${t('ppNote')}">
-            <div class="row" style="gap:6px;justify-content:flex-end"><button class="btn sm" data-act="ppRespond" data-id="${r.id}" data-ok="0">${t('ppReject')}</button><button class="btn primary sm" data-act="ppRespond" data-id="${r.id}" data-ok="1">${ic('check', 'sm')} ${t('ppConfirm')}</button></div></div>` : ''}</div></div></div>`;
+          ${open ? `<div class="stack" style="gap:6px;margin-top:8px;min-width:240px"><input class="inp" id="nt-${r.id}" placeholder="${t('ppNoteAlt')}">
+            <div class="row" style="gap:6px;justify-content:flex-end"><button class="btn sm" data-act="ppRespond" data-id="${r.id}" data-a="rejected">❌ ${t('ppReject')}</button><button class="btn primary sm" data-act="ppRespond" data-id="${r.id}" data-a="available">✅ ${t('ppAvailable')}</button></div>
+            <p class="tiny muted" style="margin:0">${t('ppAvailHint')}</p></div>` : ''}
+          ${avail ? `<div class="stack" style="gap:6px;margin-top:8px;min-width:240px"><input class="inp" id="cf-${r.id}" placeholder="${t('ppConfNo')}">
+            <div class="row" style="gap:6px;justify-content:flex-end"><button class="btn sm" data-act="ppRespond" data-id="${r.id}" data-a="rejected">${t('ppReject')}</button><button class="btn primary sm" data-act="ppRespond" data-id="${r.id}" data-a="confirmed">🎫 ${t('ppSendConf')}</button></div></div>` : ''}</div></div></div>`;
     }).join('');
     return `<div class="head"><div><h1>${t('ppBookings')}</h1><p>${esc(t('ppBkSub', { a: PP.agency }))}</p></div></div>
-      <div class="chips">${['awaiting', 'confirmed', 'rejected', 'all'].map(k => `<button class="chip ${F === k ? 'on' : ''}" data-act="ppF" data-v="${k}">${t('ppF_' + k)} (${k === 'all' ? BK.length : BK.filter(r => k === 'awaiting' ? (!r.partner_status || r.partner_status === 'awaiting') : r.partner_status === k).length})</button>`).join('')}</div>
+      <div class="chips">${['awaiting', 'confirmed', 'rejected', 'all'].map(k => `<button class="chip ${F === k ? 'on' : ''}" data-act="ppF" data-v="${k}">${t('ppF_' + k)} (${k === 'all' ? BK.length : BK.filter(r => k === 'awaiting' ? (!r.partner_status || r.partner_status === 'awaiting' || r.partner_status === 'available') : r.partner_status === k).length})</button>`).join('')}</div>
       ${rows || `<div class="card"><p class="muted">${t('ppNoBk')}</p></div>`}`;
   }
   Object.assign(ACT, {
@@ -222,9 +227,14 @@
     ppLang: () => { S.ui.lang = L() === 'ar' ? 'en' : 'ar'; try { localStorage.setItem(KEY + '-ui', JSON.stringify({ lang: S.ui.lang })); } catch (e) { } try { applyBrand(); } catch (e) { } shell(); },
     ppReload: () => { BK = null; CTL = null; window.WJ_CT_LIST = false; if (window.WJ_CT) window.WJ_CT.reload(); portalRoute(); },
     ppRespond: async el => {
-      const ok = el.dataset.ok === '1', id = el.dataset.id, conf = ($('#cf-' + id) || {}).value || '', note = ($('#nt-' + id) || {}).value || '';
-      if (ok && !conf.trim()) return toast(t('ppConfNeed'));
-      try { await Cloud.rpc('partner_respond', { p_id: id, p_confirm: ok, p_conf_no: conf, p_note: note }); toast(t('ppDone', { a: PP.agency })); BK = null; loadBk(); } catch (e) { toast(friendlyErr(e)); }
+      const a = el.dataset.a, id = el.dataset.id, conf = ($('#cf-' + id) || {}).value || '', note = ($('#nt-' + id) || {}).value || '';
+      if (a === 'confirmed' && !conf.trim()) return toast(t('ppConfNeed'));
+      el.disabled = true;
+      try {
+        await Cloud.rpc('partner_update_request', { p_id: id, p_action: a, p_conf_no: conf || null, p_note: note || null });
+        try { const { data: s } = await Cloud.sb.auth.getSession(); fetch(ALERT_URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: s.session.access_token, request_id: id }) }).catch(() => { }); } catch (e) { }
+        toast(t('ppDone', { a: PP.agency })); BK = null; loadBk();
+      } catch (e) { el.disabled = false; toast(friendlyErr(e)); }
     }
   });
   const css = document.createElement('style');
