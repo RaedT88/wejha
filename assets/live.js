@@ -1,14 +1,15 @@
 /* ---------- Wejha: live requests map as the landing page; the old dashboard moves to "Reports" ---------- */
 (function () {
   if (typeof ROUTES === 'undefined') return;
-  Object.assign(I18N, {
+  const AR = {
     nav_live: ['Live requests', 'الطلبات المباشرة'], nav_reports: ['Reports', 'التقارير'],
     lv_title: ['Live requests', 'الطلبات المباشرة'], lv_sub: ['Every WhatsApp request on the map. Glowing points arrived in the last 30 minutes.', 'كل طلبات الواتساب على الخريطة. النقاط المضيئة وصلت خلال آخر 30 دقيقة.'],
     lv_today: ['Requests today', 'طلبات اليوم'], lv_staff: ['Need staff now', 'تحتاج موظف الآن'], lv_pay: ['Awaiting payment', 'بانتظار الدفع'], lv_paid: ['Paid this month', 'مدفوع هذا الشهر'],
     lv_latest: ['Latest requests', 'أحدث الطلبات'], lv_open: ['Open', 'فتح'], lv_all: ['All orders', 'كل الطلبات'], lv_none: ['No requests yet.', 'لا توجد طلبات بعد.'],
     lv_leg_new: ['New (30 min)', 'جديد (30 دقيقة)'], lv_leg_staff: ['Needs staff', 'يحتاج موظف'], lv_leg_active: ['In progress', 'قيد المعالجة'], lv_leg_paid: ['Paid', 'مدفوع'],
     lv_updated: ['Updated', 'آخر تحديث'], lv_nocity: ['Without a city', 'بدون مدينة']
-  });
+  };
+  for (const k in AR) { I18N.en[k] = AR[k][0]; I18N.ar[k] = AR[k][1]; }
   if (!ROUTES.includes('reports')) ROUTES.push('reports');
 
   const LV = { map: null, layer: null, timer: null };
