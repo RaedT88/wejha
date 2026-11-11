@@ -19,7 +19,7 @@
     ppConfNeed: ['Enter the confirmation number.', 'اكتب رقم التأكيد.'], ppDone: ['Sent to {a}', 'تم الإرسال إلى {a}'], ppFlights: ['Flights', 'الطيران'], ppDates: ['Dates', 'التواريخ']
   };
   for (const k in AR) { I18N.en[k] = AR[k][0]; I18N.ar[k] = AR[k][1]; }
-  const appUrl = () => (Cloud.cfg && Cloud.cfg.appUrl) || (location.origin + location.pathname.replace(/[^/]*$/, ''));
+  const appUrl = () => location.origin + '/';
 
   /* ================= agency side: Partners page ================= */
   ROLE_CAN.partners = ['owner', 'agent'];
