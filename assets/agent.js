@@ -137,7 +137,7 @@ return {quote,band,D,ISO};
     ctUpload: ['Upload contract', 'رفع عقد'], ctReading: ['Reading the contract… this can take up to a minute', 'جاري قراءة العقد… قد يستغرق حتى دقيقة'],
     ctEmpty: ['No contracts yet. Upload your first PDF or Excel contract.', 'لا توجد عقود بعد. ارفع أول عقد PDF أو Excel.'],
     ctTitle: ['Title', 'العنوان'], ctDest: ['Destination', 'الوجهة'], ctKind: ['Type', 'النوع'], ctValidity: ['Validity', 'الصلاحية'], ctBookBy: ['Book by', 'آخر موعد للحجز'],
-    ctMargin: ['Your margin', 'هامش الربح'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
+    ctMargin: ['Your margin', 'هامش الربح'], ctNoMargin: ['No margin — net price!', 'بدون ربح — سعر نت!'], ctMarginHint: ['Added on top of the contract net price before the agent shows it to the customer.', 'يُضاف فوق سعر النت في العقد قبل ما يعرضه الوكيل للعميل.'], ctZeroQ: ['Margin is 0 — the agent would show the net contract price. Approve anyway?', 'هامش الربح 0 — الوكيل سيعرض سعر النت من العقد. تعتمد رغم ذلك؟'], ctStatus: ['Status', 'الحالة'], ctCurrency: ['Currency', 'العملة'],
     kind_resort: ['Resort contract (per night)', 'عقد منتجع (بالليلة)'], kind_fixed_program: ['Full program (fixed price)', 'برنامج كامل (سعر ثابت)'],
     cst_draft: ['Draft', 'مسودة'], cst_approved: ['Approved', 'معتمد'], cst_stopped: ['Stopped', 'موقوف'], cst_archived: ['Archived', 'مؤرشف'],
     mPercent: ['% of cost', '% من التكلفة'], mFixed: ['Fixed amount per booking', 'مبلغ ثابت لكل حجز'],
@@ -202,7 +202,7 @@ return {quote,band,D,ISO};
         <td>${esc(c.destination)}</td><td class="small">${t('kind_' + c.kind)}</td>
         <td class="small">${esc(c.valid_from || '—')} → ${esc(c.valid_to || '—')}</td>
         <td class="small ${late ? 'bad' : ''}" style="${late ? 'color:var(--bad)' : ''}">${esc(c.book_by || '—')}</td>
-        <td class="small">${c.margin_type === 'fixed' ? fmt(c.margin_value, c.currency) : (Number(c.margin_value) || 0) + '%'}</td>
+        <td class="small"><button class="btn ${(Number(c.margin_value) || 0) > 0 ? 'ghost' : 'primary'} sm" data-act="ctMarginDlg" data-id="${c.id}" title="${t('ctMargin')}">${ic('edit', 'sm')} ${c.margin_type === 'fixed' ? fmt(c.margin_value, c.currency) : (Number(c.margin_value) || 0) + '%'}</button>${(Number(c.margin_value) || 0) > 0 ? '' : `<div class="small" style="color:var(--bad)">${t('ctNoMargin')}</div>`}</td>
         <td>${stPill(c.status)}</td></tr>`;
     }).join('');
     return `
@@ -331,6 +331,22 @@ return {quote,band,D,ISO};
   }
 
   Object.assign(ACT, {
+    ctMarginDlg: el => {
+      const c = (CT || []).find(x => x.id === el.dataset.id); if (!c) return;
+      modal(t('ctMargin') + ' · ' + c.title, `<p class="small muted">${t('ctMarginHint')}</p>
+        <div class="row" style="gap:6px"><select id="qm-t"><option value="percent" ${c.margin_type !== 'fixed' ? 'selected' : ''}>${t('mPercent')}</option><option value="fixed" ${c.margin_type === 'fixed' ? 'selected' : ''}>${t('mFixed')} (${esc(c.currency || '')})</option></select>
+        <input id="qm-v" type="number" step="any" min="0" value="${esc(String(c.margin_value ?? 0))}" style="max-width:120px"></div>`,
+        `<button class="btn ghost" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="ctMarginSave" data-id="${c.id}">${t('save')}</button>`);
+    },
+    ctMarginSave: async el => {
+      const row = { margin_type: $('#qm-t').value, margin_value: Math.max(0, Number($('#qm-v').value) || 0), updated_at: new Date().toISOString() };
+      const { error } = await Cloud.sb.from('package_contracts').update(row).eq('id', el.dataset.id);
+      if (error) return toast(friendlyErr(error));
+      const c = (CT || []).find(x => x.id === el.dataset.id); if (c) Object.assign(c, row);
+      closeModal(); toast(t('saved')); rerenderSafe();
+    },
+  });
+  Object.assign(ACT, {
     ctUploadDlg: () => uploadDlg(),
     ctRead: () => readContract(),
     ctOpen: el => { const c = CT.find(x => x.id === el.dataset.id); if (!c) return; CTD = JSON.parse(JSON.stringify(c)); reviewDlg(); },
@@ -346,7 +362,11 @@ return {quote,band,D,ISO};
         <div style="text-align:end;white-space:nowrap"><div class="muted">${t('ctNet')} ${fmt(o.net, o.currency)}</div><b>${t('ctSell')} ${fmt(o.sell, o.currency)}</b></div></div>`).join('');
     },
     ctSave: async el => {
-      const c = collect(); if (!c) return;
+      const c0 = el.dataset.ok && ACT._ctPending ? ACT._ctPending : collect(); ACT._ctPending = null; if (!c0) return;
+      if (el.dataset.st === 'approved' && !(Number(c0.margin_value) > 0) && !el.dataset.ok) {
+        ACT._ctPending = c0; return confirmBox(t('ctZeroQ'), () => ACT.ctSave({ dataset: { st: 'approved', ok: '1' } }), t('ctApprove'));
+      }
+      const c = c0;
       c.status = el.dataset.st;
       const row = { agency_id: Cloud.agencyId, status: c.status, kind: c.kind, destination: c.destination, title: c.title, valid_from: c.valid_from, valid_to: c.valid_to, book_by: c.book_by,
         currency: c.currency, margin_type: c.margin_type, margin_value: c.margin_value, data: c.data, source_file: c.source_file || null, updated_at: new Date().toISOString() };
