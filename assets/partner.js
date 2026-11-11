@@ -8,6 +8,8 @@
     paPhone: ['WhatsApp for booking alerts', 'واتساب لتنبيهات الحجز'], paEmail: ['Email', 'الإيميل'], paNotes: ['Notes (internal)', 'ملاحظات (داخلية)'], paActive: ['Active', 'مفعّل'],
     paUsers: ['Portal users', 'مستخدمو البوابة'], paInvite: ['Invite by email', 'دعوة بالإيميل'], paInviteHint: ['They sign up at {u} with this email (leave the agency name empty) and land in their portal.', 'يسجّلون حساب على {u} بنفس الإيميل (يتركون اسم الشركة فاضي) ويدخلون بوابتهم مباشرة.'],
     paInvited: ['invited', 'مدعو'], paJoined: ['joined', 'مسجّل'], paEmpty: ['No partners yet.', 'لا يوجد شركاء بعد.'], paContracts: ['Contracts', 'العقود'], paPending: ['waiting review', 'بانتظار المراجعة'],
+    paInvMsg: ['Hello {n}, you are invited to the {a} partner portal to upload your contracts and confirm bookings.\n1) Open {u}\n2) Choose "Create account" and sign up with this email: {e} (leave the agency name empty)\n3) Confirm the email we send you, then sign in.', 'مرحباً {n}، تمت دعوتكم لبوابة شركاء {a} لرفع عقودكم وتأكيد الحجوزات.\n1) افتحوا {u}\n2) اختاروا "إنشاء حساب" وسجّلوا بهذا الإيميل: {e} (اتركوا اسم الشركة فاضي)\n3) أكّدوا الإيميل اللي يوصلكم، ثم سجّلوا الدخول.'],
+    paSendWa: ['Send invite on WhatsApp', 'إرسال الدعوة واتساب'], paCopyInv: ['Copy invite', 'نسخ الدعوة'], paNoEmailSent: ['Wejha does not email the invite — send it to them with the buttons below.', 'وجهة ما ترسل إيميل دعوة — أرسلها لهم بالأزرار تحت.'],
     paNeedName: ['Company name is required.', 'اسم الشركة مطلوب.'], paDelQ: ['Remove this user from the portal?', 'إزالة هذا المستخدم من البوابة؟'],
     // portal
     ppTitle: ['Partner portal', 'بوابة الشركاء'], ppFor: ['{p} · with {a}', '{p} · مع {a}'], ppContracts: ['My contracts', 'عقودي'], ppBookings: ['Booking requests', 'طلبات الحجز'],
@@ -60,7 +62,9 @@
       ${p ? `<h3 class="small" style="margin:14px 0 6px">${t('paUsers')}</h3>
         ${users.map(u => `<div class="row between small" style="padding:4px 0;border-bottom:1px solid var(--line)"><span>${esc(u.email)} · <span class="muted">${u.st}</span></span><button class="icon-btn" data-act="paRmUser" data-email="${esc(u.email)}" aria-label="${t('delete')}">${ic('x', 'sm')}</button></div>`).join('')}
         <div class="row" style="gap:6px;margin-top:8px"><input id="pa-inv" class="inp" dir="ltr" placeholder="name@hotel.com" type="email"><button class="btn" data-act="paInvite">${ic('plus', 'sm')} ${t('paInvite')}</button></div>
-        <p class="small muted">${t('paInviteHint', { u: esc(appUrl()) })}</p>` : ''}`,
+        <p class="small muted">${t('paInviteHint', { u: esc(appUrl()) })}</p>
+        ${users.length ? (() => { const em = users[users.length - 1].email, msg = t('paInvMsg', { n: PE.contact_name || PE.name, a: (S.brand && S.brand.name) || '', u: appUrl(), e: em }); return `<div class="warn-box" style="margin-top:8px">${ic('alert', 'sm')}<span>${t('paNoEmailSent')}</span></div>
+          <div class="row" style="gap:6px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" data-act="copy" data-text="${esc(msg)}">${ic('copy', 'sm')} ${t('paCopyInv')}</button>${PE.phone ? `<a class="btn primary sm" target="_blank" rel="noopener" href="https://wa.me/${esc(String(PE.phone).replace(/[^\d]/g, ''))}?text=${encodeURIComponent(msg)}">${ic('chat', 'sm')} ${t('paSendWa')}</a>` : ''}</div>`; })() : ''}` : ''}`,
       `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="paSave">${t('save')}</button>`, { wide: true });
   }
   Object.assign(ACT, {
@@ -71,8 +75,10 @@
       if (!row.name) return toast(t('paNeedName'));
       const q = PE.id ? Cloud.sb.from('partners').update(row).eq('id', PE.id).select().single() : Cloud.sb.from('partners').insert(row).select().single();
       const { data, error } = await q; if (error) return toast(friendlyErr(error));
+      if (!PE.id && data && row.email) { try { await Cloud.rpc('invite_partner_user', { p_partner: data.id, p_email: row.email }); } catch (e) { } }
+      if (PE.id && row.email && !PU.m.concat(PU.i).some(x => x.partner_id === PE.id)) { try { await Cloud.rpc('invite_partner_user', { p_partner: PE.id, p_email: row.email }); } catch (e) { } }
       toast(t('saved')); await load();
-      if (!PE.id && data) editDlg(PA.find(x => x.id === data.id)); else closeModal();
+      editDlg(PA.find(x => x.id === (PE.id || (data && data.id))));
     },
     paInvite: async () => {
       const em = $('#pa-inv').value.trim(); if (!em) return;
