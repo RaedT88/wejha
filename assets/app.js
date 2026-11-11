@@ -1203,17 +1203,37 @@ document.addEventListener('input', e => {
     save();
   }
 });
+// Resize uploaded images in the browser so quotes stay small and the back office loads fast.
+function shrinkImage(file, maxSide, keepAlpha) {
+  return new Promise((res, rej) => {
+    const rd = new FileReader();
+    rd.onerror = rej;
+    rd.onload = () => {
+      if (/svg/.test(file.type)) return res(rd.result);
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const out = keepAlpha ? c.toDataURL('image/png') : c.toDataURL('image/jpeg', 0.8);
+        res(out.length < rd.result.length ? out : rd.result);
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  });
+}
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.file) {
     const file = el.files && el.files[0]; if (!file) return;
-    if (file.size > 1.5 * 1024 * 1024) return toast(t('imageTooBig'));
-    const rd = new FileReader();
-    rd.onload = () => {
-      if (el.dataset.file === 'logo') { S.brand.logo = rd.result; renderShell(); route(); }
-      else if (el.dataset.file === 'cover') { const q = curQ(); if (q) { q.cover = rd.result; route(); } }
-    };
-    rd.readAsDataURL(file);
+    if (file.size > 15 * 1024 * 1024) return toast(t('imageTooBig'));
+    const kind = el.dataset.file;
+    shrinkImage(file, kind === 'logo' ? 500 : 1400, kind === 'logo').then(url => {
+      if (kind === 'logo') { S.brand.logo = url; renderShell(); route(); }
+      else if (kind === 'cover') { const q = curQ(); if (q) { q.cover = url; route(); } }
+    }).catch(() => toast(t('imageTooBig')));
   }
   if (el.dataset.brand && el.tagName === 'SELECT') { S.brand[el.dataset.brand] = el.value; route(); }
 });
