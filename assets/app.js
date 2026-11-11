@@ -2483,7 +2483,7 @@ function dspDrawMap(orders) {
   const el = document.getElementById('dsp-map'); const LL = window.LeafletLib; if (!el || !LL) return;
   if (!DSP.map || DSP.map.getContainer() !== el) {
     DSP.map = LL.map(el, { zoomControl: true, attributionControl: true, worldCopyJump: true }).setView([24, 48], 3);
-    LL.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap contributors © CARTO' }).addTo(DSP.map);
+    LL.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap contributors' }).addTo(DSP.map);
     DSP.layer = LL.layerGroup().addTo(DSP.map);
   }
   DSP.layer.clearLayers();
