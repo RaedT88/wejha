@@ -458,10 +458,15 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
 /* Orders (ops) */
 .os-received,.os-processing{color:var(--info);background:color-mix(in oklab,var(--info) 12%,var(--surface))}
-.os-searching,.os-quoted{color:var(--brand-ink);background:var(--brand-soft)}
+.os-searching,.os-replied{color:var(--brand-ink);background:var(--brand-soft)}
+.os-quoted{color:var(--good);background:color-mix(in oklab,var(--good) 13%,var(--surface))}
 .os-payment_pending,.os-hold{color:var(--warn);background:color-mix(in oklab,var(--warn) 13%,var(--surface))}
 .os-paid,.os-vouchered{color:var(--good);background:color-mix(in oklab,var(--good) 13%,var(--surface))}
-.os-human_review,.os-failed{color:var(--bad);background:color-mix(in oklab,var(--bad) 11%,var(--surface))}
+.os-failed{color:var(--bad);background:color-mix(in oklab,var(--bad) 11%,var(--surface))}
+.os-human_review{color:#C2560C;background:color-mix(in oklab,#EA7A1A 15%,var(--surface))}
+.tbl tr.row-alert.row-staff td:first-child{box-shadow:inset 3px 0 0 #EA7A1A}
+[dir="rtl"] .tbl tr.row-alert.row-staff td:first-child{box-shadow:inset -3px 0 0 #EA7A1A}
+.dsp-sel{min-width:130px;max-width:170px;padding:4px 8px;font-size:12px}
 .os-cancelled{color:var(--muted)}
 .tile-alert{border-color:color-mix(in oklab,var(--bad) 40%,var(--line))}
 .tile-alert .v{color:var(--bad)}

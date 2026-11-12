@@ -2249,7 +2249,7 @@ function opsBody() {
   <div class="card" style="padding:4px 6px"><div class="tbl-wrap"><table class="tbl">
     <thead><tr><th>${t('oc_customer')}</th><th>${t('oc_request')}</th><th>${t('oc_stay')}</th><th class="r">${t('oc_amount')}</th><th>${t('oc_status')}</th><th>${t('oc_updated')}</th></tr></thead>
     <tbody>${list.length ? list.map(o => `
-      <tr class="click ${OPS_GROUPS.staff.includes(o.status) ? 'row-alert' : ''}" data-act="opsOpen" data-id="${esc(o.request_id)}" tabindex="0">
+      <tr class="click ${OPS_GROUPS.staff.includes(o.status) ? 'row-alert' : ''}${o.status === 'human_review' ? ' row-staff' : ''}" data-act="opsOpen" data-id="${esc(o.request_id)}" tabindex="0">
         <td class="who"><b class="num" dir="ltr">${fmtPhone(o.sender)}</b><span>${esc(o.request_id)}</span></td>
         <td class="small"><b>${esc(o.hotel || o.city || '—')}</b><div class="tiny muted ellip" dir="auto">${esc(reqText(o.request_text).split('\n')[0].slice(0, 70))}</div></td>
         <td class="small">${o.checkin ? `${fmtShort(o.checkin)} → ${fmtShort(o.checkout)}` : '—'}</td>
@@ -2390,19 +2390,19 @@ async function opsDemoCall(body) {
   const T = {
     dp_staff: ['Staff', 'الموظف'], dp_unassigned: ['Unassigned', 'غير مُسند'], dp_late: ['Late', 'متأخر'], dp_accepted: ['Accepted', 'مُستلم'],
     dp_waiting: ['Waiting {m} min', 'بانتظار الاستلام {m} د'], dp_mine: ['My orders', 'طلباتي'], dp_iam: ['I am', 'أنا'], dp_pickMe: ['Choose your name', 'اختر اسمك'],
-    dp_accept: ['Accept order', 'استلمت الطلب'], dp_reassign: ['Reassign', 'حوّل لموظف'], dp_toQuote: ['Turn into quote', 'حوّل لعرض سعر'],
+    dp_accept: ['Accept order', 'استلمت الطلب'], dp_reassign: ['Reassign', 'حوّل لموظف'], dp_assign: ['Assign to', 'أسند إلى'], dp_unassign: ['Unassign', 'إلغاء الإسناد'], dp_unassigned_done: ['Unassigned', 'تم إلغاء الإسناد'], dp_toQuote: ['Turn into quote', 'حوّل لعرض سعر'],
     dp_assignedTo: ['Assigned to {n}', 'مُسند إلى {n}'], dp_acceptedBy: ['Accepted by {n}', 'استلمه {n}'], dp_history: ['Assignment history', 'سجل الإسناد'],
     dp_duty: ['On duty', 'على رأس العمل'], dp_dutyTitle: ['Team on duty', 'الفريق المناوب'], dp_dutyHint: ['New orders rotate between staff on duty. Unaccepted orders move to the next person after {m} minutes.', 'الطلبات الجديدة تتوزع بالدور على المناوبين. الطلب غير المُستلم ينتقل للموظف التالي بعد {m} دقائق.'],
     dp_late_k: ['Late (not accepted)', 'متأخرة (غير مستلمة)'], dp_mapTitle: ['Live request pulse', 'نبض الطلبات المباشر'], dp_mapHint: ['Orders by destination; pulsing dots are new in the last 30 minutes.', 'الطلبات حسب الوجهة؛ النقاط النابضة جديدة خلال آخر 30 دقيقة.'],
     dp_quoteMade: ['Draft quote created from the order.', 'تم إنشاء مسودة عرض سعر من الطلب.'], dp_saved: ['Saved.', 'تم الحفظ.'], dp_noStaff: ['Nobody is on duty. Turn someone on in “Team on duty”.', 'لا يوجد موظف مناوب. فعّل موظفاً من "الفريق المناوب".'],
-    dp_by_auto: ['auto', 'تلقائي'], dp_by_timeout: ['not accepted in time', 'لم يُستلم في الوقت'], dp_by_manual: ['manual', 'يدوي'],
+    dp_by_auto: ['auto', 'تلقائي'], dp_by_timeout: ['not accepted in time', 'لم يُستلم في الوقت'], dp_by_manual: ['manual', 'يدوي'], dp_by_unassign: ['unassigned', 'أُلغي الإسناد'],
   };
   for (const [k, [en, ar]] of Object.entries(T)) { I18N.en[k] = en; I18N.ar[k] = ar; }
 })();
 
 const DSP = { rows: {}, loaded: false, busy: false, map: null, layer: null };
 const dspCfg = () => window.WEJHA_CONFIG || {};
-const DSP_STAFF = () => dspCfg().staff || [
+const DSP_STAFF = () => (DSP.team && DSP.team.length ? DSP.team : null) || dspCfg().staff || [
   { id: 's1', name: 'أحمد العتيبي' }, { id: 's2', name: 'سارة القحطاني' }, { id: 's3', name: 'خالد المصري' }, { id: 's4', name: 'منى الشهري' }];
 const DSP_SLA = () => Number(dspCfg().assignMinutes) || 10;
 const DSP_DONE = ['paid', 'vouchered', 'cancelled'];
@@ -2412,6 +2412,11 @@ const dspDuty = () => { const d = DSP.rows.__duty__; const off = (d && d.history
 const dspCloud = () => typeof opsLive === 'function' && opsLive() && Cloud.sb;
 
 async function dspLoad() {
+  if (Cloud.on && Cloud.sb && !DSP.team) {
+    try { const { data } = await Cloud.sb.from('agency_members').select('user_id, name, email, role').eq('agency_id', Cloud.agencyId).order('created_at');
+      DSP.team = (data || []).filter(m => m.role !== 'viewer').map(m => ({ id: m.user_id, name: m.name || String(m.email || '').split('@')[0] || '—' })); } catch (e) { DSP.team = []; }
+    if (Cloud.user && !dspMe()) { try { localStorage.setItem('wejha_me', Cloud.user.id); } catch (e) { } }
+  }
   if (dspCloud()) {
     const { data, error } = await Cloud.sb.from('ops_assignments').select('*');
     if (!error) { DSP.rows = {}; (data || []).forEach(r => { DSP.rows[r.request_id] = r; }); DSP.loaded = true; }
@@ -2540,7 +2545,7 @@ function dspDetailPanel(o) {
         ${log.length ? `<div class="tiny muted">${t('dp_history')}: ${log.map(l => `${esc(dspStaffName(l.s))} (${t('dp_by_' + l.by)})`).join(' ← ')}</div>` : ''}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${canEdit && r && !r.accepted_at ? `<button class="btn primary sm" data-act="dspAccept" data-id="${esc(o.request_id)}">${ic('check', 'sm')} ${t('dp_accept')}</button>` : ''}
-        ${canEdit ? `<select class="inp sm" id="dsp-re" style="width:auto"><option value="">${t('dp_reassign')}…</option>${DSP_STAFF().map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>` : ''}
+        ${canEdit ? `<select class="inp sm" id="dsp-re" style="width:auto"><option value="">${r && r.staff_id ? t('dp_reassign') : t('dp_assign')}…</option>${DSP_STAFF().filter(s => !r || s.id !== r.staff_id).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}${r && r.staff_id ? `<option value="__none__">✕ ${t('dp_unassign')}</option>` : ''}</select>` : ''}
         ${canEdit ? `<button class="btn sm" data-act="dspQuote" data-id="${esc(o.request_id)}">${ic('doc', 'sm')} ${t('dp_toQuote')}</button>` : ''}
       </div></div></div>`;
 }
@@ -2573,6 +2578,21 @@ async function dspToQuote(o) {
   closeModal(); toast(t('dp_quoteMade')); openQuote(q.id);
 }
 
+async function dspAssign(id, sid) {
+  const none = sid === '__none__';
+  const r = DSP.rows[id] || { request_id: id, history: {} };
+  const log = ((r.history && r.history.log) || []).concat([{ s: none ? null : sid, at: new Date().toISOString(), by: none ? 'unassign' : 'manual' }]).slice(-20);
+  await dspSave([{ ...r, request_id: id, staff_id: none ? null : sid, assigned_at: new Date().toISOString(), accepted_at: null, history: { ...(r.history || {}), log } }]);
+  toast(none ? t('dp_unassigned_done') : t('dp_saved')); opsPaint();
+}
+function dspCellEdit(o) {
+  if (!can('edit') || DSP_DONE.includes(o.status)) return dspCell(o);
+  const r = DSP.rows[o.request_id]; const cur = (r && r.staff_id) || ''; const st = dspState(o);
+  return `<div class="dsp ${st.cls}" data-act="dspNoop"><select class="inp sm dsp-sel" data-id="${esc(o.request_id)}" aria-label="${t('dp_staff')}">
+    <option value="__none__" ${cur ? '' : 'selected'}>${t('dp_unassigned')}</option>${DSP_STAFF().map(s => `<option value="${s.id}" ${cur === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>${cur && st.sub ? `<div class="tiny">${esc(st.sub)}</div>` : ''}</div>`;
+}
+document.addEventListener('change', e => { const el = e.target; if (el && el.classList && el.classList.contains('dsp-sel')) dspAssign(el.dataset.id, el.value); });
+
 /* ---------- Hooks into the Orders page ---------- */
 (function hook() {
   const _load = opsLoad;
@@ -2584,7 +2604,7 @@ async function dspToQuote(o) {
     const all = opsOrders();
     // staff column
     html = html.replace(`<th>${t('oc_status')}</th>`, `<th>${t('oc_status')}</th><th>${t('dp_staff')}</th>`);
-    html = html.replace(/(<tr class="click[^"]*" data-act="opsOpen" data-id="([^"]+)"[\s\S]*?<td>(<span class="pill[^<]*<\/span>)<\/td>)/g, (m, all1, id) => { const o = all.find(x => x.request_id === id.replace(/&amp;/g, '&')); return m + (o ? `<td>${dspCell(o)}</td>` : '<td></td>'); });
+    html = html.replace(/(<tr class="click[^"]*" data-act="opsOpen" data-id="([^"]+)"[\s\S]*?<td>(<span class="pill[^<]*<\/span>)<\/td>)/g, (m, all1, id) => { const o = all.find(x => x.request_id === id.replace(/&amp;/g, '&')); return m + (o ? `<td>${dspCellEdit(o)}</td>` : '<td></td>'); });
     html = html.replace('colspan="6" class="empty"', 'colspan="7" class="empty"');
     // "My orders" chip + late KPI
     const mine = all.filter(dspMine).length, late = dspLateCount(all);
@@ -2610,12 +2630,11 @@ async function dspToQuote(o) {
     _detail(); const box = document.getElementById('od'); const o = opsOrders().find(x => x.request_id === OPS.sel);
     if (box && o) box.insertAdjacentHTML('afterbegin', dspDetailPanel(o));
     const sel = document.getElementById('dsp-re');
-    if (sel) sel.onchange = async () => { const sid = sel.value; if (!sid) return; const r = DSP.rows[o.request_id] || { request_id: o.request_id, history: {} };
-      const log = ((r.history && r.history.log) || []).concat([{ s: sid, at: new Date().toISOString(), by: 'manual' }]).slice(-20);
-      await dspSave([{ ...r, staff_id: sid, assigned_at: new Date().toISOString(), accepted_at: null, history: { ...(r.history || {}), log } }]); toast(t('dp_saved')); opsPaintDetail(); opsPaint(); };
+    if (sel) sel.onchange = async () => { if (!sel.value) return; await dspAssign(o.request_id, sel.value); opsPaintDetail(); };
   };
   document.addEventListener('change', e => { if (e.target && e.target.id === 'dsp-me') { try { localStorage.setItem('wejha_me', e.target.value); } catch (x) {} opsPaint(); } });
   Object.assign(ACT, {
+    dspNoop: () => { },
     dspAccept: async el => { const r = DSP.rows[el.dataset.id]; if (!r) return; await dspSave([{ ...r, accepted_at: new Date().toISOString() }]); toast(t('dp_saved')); opsPaintDetail(); opsPaint(); },
     dspDuty: async el => { const meta = DSP.rows.__duty__ || { request_id: '__duty__', staff_id: null, history: { off: [], rr: 0 } }; const off = new Set(meta.history.off || []); off.has(el.dataset.v) ? off.delete(el.dataset.v) : off.add(el.dataset.v); await dspSave([{ ...meta, history: { ...meta.history, off: [...off] } }]); opsPaint(); },
     dspQuote: async el => { const o = opsOrders().find(x => x.request_id === el.dataset.id); if (o) await dspToQuote(o); },
