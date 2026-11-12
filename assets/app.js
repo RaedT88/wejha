@@ -2592,7 +2592,7 @@ async function dspToQuote(o) {
     if (late) html = html.replace('<div class="grid g4">', `<div class="warn-box" style="margin-bottom:12px">${ic('alert', 'sm')} ${t('dp_late_k')}: <b>${late}</b></div><div class="grid g4">`);
     if (!dspDuty().length) html = html.replace('<div class="grid g4">', `<div class="warn-box" style="margin-bottom:12px">${ic('alert', 'sm')} ${t('dp_noStaff')}</div><div class="grid g4">`);
     // duty + map above the table
-    html = html.replace('<div class="card" style="padding:12px 14px">', dspDutyCard() + dspMapCard() + '<div class="card" style="padding:12px 14px">');
+    html = html.replace('<div class="card" style="padding:12px 14px">', dspDutyCard() + '<div class="card" style="padding:12px 14px">');
     setTimeout(() => dspDrawMap(all), 0);
     return html;
   };
