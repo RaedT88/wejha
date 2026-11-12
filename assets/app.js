@@ -2118,7 +2118,7 @@ window.LACT = {
     nav_orders: ['Orders', 'الطلبات'],
     ordersSub: ['WhatsApp requests handled by the booking assistant. Step in when it needs a person.', 'طلبات واتساب التي يتابعها مساعد الحجز. تدخّل عندما يحتاج الطلب موظفاً.'],
     of_all: ['All', 'الكل'], of_staff: ['Needs staff', 'تحتاج موظف'], of_active: ['In progress', 'قيد التنفيذ'], of_done: ['Paid & issued', 'مدفوعة ومُصدرة'], of_closed: ['Cancelled', 'ملغاة'],
-    os_received: ['Received', 'مستلم'], os_processing: ['Processing', 'قيد المعالجة'], os_searching: ['Confirming rate', 'تأكيد السعر'], os_quoted: ['Quote sent', 'عرض مُرسل'],
+    os_received: ['Received', 'مستلم'], os_processing: ['Processing', 'قيد المعالجة'], os_searching: ['Confirming rate', 'تأكيد السعر'], os_quoted: ['Quote sent', 'عرض مُرسل'], os_replied: ['Replied', 'تم الرد'],
     os_payment_pending: ['Awaiting payment', 'بانتظار الدفع'], os_paid: ['Paid', 'مدفوع'], os_vouchered: ['Voucher issued', 'صدر الفاوتشر'], os_hold: ['On hold', 'حجز مؤقت'],
     os_human_review: ['Needs staff', 'يحتاج موظف'], os_failed: ['Failed', 'فشل'], os_cancelled: ['Cancelled', 'ملغي'],
     ok_today: ['Requests today', 'طلبات اليوم'], ok_staff: ['Need staff now', 'تحتاج موظف الآن'], ok_pay: ['Awaiting payment', 'بانتظار الدفع'], ok_paid: ['Paid this month', 'مدفوع هذا الشهر'],
@@ -2154,7 +2154,7 @@ window.LACT = {
 
 const OPS = { data: null, at: 0, loading: false, err: null, f: 'all', q: '', sel: null, mode: {}, timer: null, phones: null, demo: null };
 const OPS_GROUPS = {
-  all: null, staff: ['human_review', 'failed'], active: ['received', 'processing', 'searching', 'quoted', 'payment_pending', 'hold'],
+  all: null, staff: ['human_review', 'failed'], active: ['received', 'processing', 'searching', 'quoted', 'replied', 'payment_pending', 'hold'],
   done: ['paid', 'vouchered'], closed: ['cancelled']
 };
 const opsCfg = () => window.WEJHA_CONFIG || {};
