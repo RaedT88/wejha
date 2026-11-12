@@ -44,7 +44,7 @@ const I18N = { en: {}, ar: {} };
     quotationDoc: ['Quotation', 'عرض سعر'], issued: ['Issued', 'تاريخ الإصدار'], accommodation: ['Accommodation', 'الإقامة'], addedExtra: ['added extra', 'إضافة مختارة'],
     nav_dashboard: ['Dashboard', 'الرئيسية'], nav_quotes: ['Quotations', 'عروض الأسعار'], nav_packages: ['Packages', 'الباقات'], nav_bookings: ['Bookings & payments', 'الحجوزات والمدفوعات'], nav_clients: ['Clients', 'العملاء'], nav_branding: ['Branding & settings', 'الهوية والإعدادات'],
     mainNav: ['Main navigation', 'القائمة الرئيسية'], resetDemo: ['Reset demo data', 'إعادة البيانات التجريبية'], poweredBy: ['Powered by', 'مدعوم من'], menu: ['Menu', 'القائمة'],
-    searchAll: ['Search quotes, clients, destinations…', 'ابحث في العروض والعملاء والوجهات…'], fromPackage: ['From a package', 'من باقة جاهزة'], newQuote: ['New quotation', 'عرض سعر جديد'],
+    searchAll: ['Search quotes, clients, destinations…', 'ابحث في العروض والعملاء والوجهات…'], fromPackage: ['From a package', 'من باقة جاهزة'], contactWejha: ['Contact Wejha', 'تواصل مع وجهة'], newQuote: ['New quotation', 'عرض سعر جديد'],
     close: ['Close', 'إغلاق'], areYouSure: ['Are you sure?', 'هل أنت متأكد؟'], cancel: ['Cancel', 'إلغاء'], yesContinue: ['Yes, continue', 'نعم، متابعة'],
     copied: ['Copied to clipboard', 'تم النسخ'], copyManually: ['Copy this text', 'انسخ هذا النص'], copyManuallyHint: ['Your browser blocked automatic copying. Select the text and copy it.', 'منع المتصفح النسخ التلقائي. حدّد النص وانسخه.'],
     st_draft: ['Draft', 'مسودة'], st_sent: ['Sent', 'مُرسل'], st_viewed: ['Viewed', 'تمت المشاهدة'], st_accepted: ['Accepted', 'مقبول'], st_confirmed: ['Confirmed', 'مؤكد'], st_lost: ['Lost', 'مفقود'],
@@ -815,6 +815,7 @@ function renderShell() {
       <button class="icon-btn menu-btn" data-act="toggleSide" aria-label="${t('menu')}">${ic('menu')}</button>
       <div class="search">${ic('search', 'sm')}<input id="gsearch" type="search" placeholder="${t('searchAll')}" aria-label="${t('searchAll')}"></div>
       <div class="grow"></div>
+      <a class="btn icon-only hide-sm wj-contact" href="brand.html#contact" target="_blank" rel="noopener" title="${t('contactWejha')}" aria-label="${t('contactWejha')}"><img src="assets/brand/wejha-mark.svg" alt="" width="20" height="20"><span>${t('contactWejha')}</span></a>
       ${cloud ? `<span class="sync saved" id="sync">${ic('check', 'sm')}${t('syncSaved')}</span>` : `<span class="sync demo hide-sm">${t('demoMode')}</span>`}
       ${can('edit') ? `<button class="btn hide-sm" data-act="go" data-v="packages">${ic('box', 'sm')} ${t('fromPackage')}</button>
       <button class="btn primary" data-act="newQuote">${ic('plus', 'sm')} ${t('newQuote')}</button>` : ''}

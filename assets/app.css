@@ -518,3 +518,6 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .itin-pin span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font:600 13px/1 inherit;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
 
 .art{position:relative}.art .credit{position:absolute;bottom:6px;inset-inline-end:8px;font-size:10.5px;color:#fff;background:rgba(0,0,0,.45);padding:2px 7px;border-radius:999px;text-decoration:none;z-index:2;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.art .credit:hover{background:rgba(0,0,0,.7)}
+
+.wj-contact{gap:6px;text-decoration:none}
+.wj-contact img{display:block;width:20px;height:20px}

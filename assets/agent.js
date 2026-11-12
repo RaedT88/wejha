@@ -129,6 +129,13 @@ function quote(row,req,today){
     let tax=0;
     if(tx.length){const simple=tx.filter(x=>!x.compound).reduce((a,x)=>a+o.net*(+x.pct)/100,0);const comp=tx.filter(x=>x.compound).reduce((a,x)=>a+(o.net+simple)*(+x.pct)/100,0);tax=r2(simple+comp);}
     o.tax=tax;o.net_with_tax=r2(o.net+tax);o.sell=r2(applyMargin(o.net+tax,row));o.currency=p.currency||row.currency||'USD';
+    const fx=p.fx;
+    if(fx&&fx.to&&+fx.rate>0&&String(fx.to).toUpperCase()!==String(o.currency).toUpperCase()){
+      const k=+fx.rate,b=1+(+fx.buffer||0)/100;
+      o.orig={currency:o.currency,net:o.net,net_with_tax:o.net_with_tax,sell:o.sell};
+      o.net=r2(o.net*k);o.tax=r2(o.tax*k);o.net_with_tax=r2(o.net_with_tax*k);o.sell=r2(o.orig.sell*k*b);
+      o.currency=String(fx.to).toUpperCase();o.fx={from:o.orig.currency,rate:k,buffer:+fx.buffer||0};
+    }
   }
   res.title=p.title||row.title;res.package_id=row.package_id;res.kind=p.kind;res.inclusions=p.inclusions||[];
   return res;
@@ -150,7 +157,11 @@ return {quote,band,D,ISO};
     mPercent: ['% of cost', '% من التكلفة'], mFixed: ['Fixed amount per booking', 'مبلغ ثابت لكل حجز'],
     ctReview: ['Review contract', 'مراجعة العقد'], ctWarnings: ['Check before approving', 'راجع قبل الاعتماد'],
     ctSaveDraft: ['Save as draft', 'حفظ كمسودة'], ctSendReview: ['Send for approval', 'إرسال للاعتماد'], ctSentReview: ['Sent to the owner for approval', 'أُرسل للمالك للاعتماد'],
-    ctOwnerSets: ['Set by owner', 'يحدده المالك'], ctOwnerOnly: ['Only the owner can do this.', 'هذا الإجراء للمالك فقط.'], ctStaffNote: ['The owner sets the margin and approves before customers see the price.', 'المالك يحدد هامش الربح ويعتمد العقد قبل أن يظهر السعر للعملاء.'], ctApprove: ['Save & approve', 'حفظ واعتماد'], ctStop: ['Stop sale', 'إيقاف البيع'], ctResume: ['Approve', 'اعتماد'],
+    ctOwnerSets: ['Set by owner', 'يحدده المالك'],
+    ctFx: ['Customer currency (conversion)', 'عملة العميل (التحويل)'], ctFxHint: ['If the contract is in another currency, the price is converted at your rate, a small exchange buffer is added, then your margin.', 'لو العقد بعملة أخرى، يتحوّل السعر بسعر الصرف اللي تحدده، ويُضاف هامش أمان بسيط لفرق العملة، ثم هامش ربحك.'],
+    ctFxTo: ['Show customers in', 'اعرض للعميل بـ'], ctFxNone: ['No conversion', 'بدون تحويل'], ctFxRate: ['1 unit of contract currency =', '1 من عملة العقد ='], ctFxBuf: ['Exchange buffer %', 'هامش فرق العملة %'],
+    ctFxSuggest: ['Suggested rate', 'سعر مقترح'], ctFxSuggested: ['Suggested rate filled — check it against today’s bank rate.', 'تم وضع سعر مقترح — راجعه مع سعر البنك اليوم.'], ctFxNoRate: ['No suggested rate for this pair — type it in.', 'لا يوجد سعر مقترح لهذه العملة — اكتبه يدويًا.'],
+    ctFxNow: ['1 {a} = {r} {b} · buffer {f}%', '1 {a} = {r} {b} · هامش فرق عملة {f}%'], ctOwnerOnly: ['Only the owner can do this.', 'هذا الإجراء للمالك فقط.'], ctStaffNote: ['The owner sets the margin and approves before customers see the price.', 'المالك يحدد هامش الربح ويعتمد العقد قبل أن يظهر السعر للعملاء.'], ctApprove: ['Save & approve', 'حفظ واعتماد'], ctStop: ['Stop sale', 'إيقاف البيع'], ctResume: ['Approve', 'اعتماد'],
     ctTest: ['Test a price', 'جرّب تسعيرة'], ctCheckin: ['Check-in', 'الوصول'], ctCheckout: ['Check-out', 'المغادرة'], ctAdults: ['Adults', 'بالغين'], ctKids: ['Children ages (e.g. 5,9)', 'أعمار الأطفال (مثال 5,9)'],
     ctCalc: ['Calculate', 'احسب'], ctNet: ['Cost', 'التكلفة'], ctSell: ['Selling price', 'سعر البيع'],
     ctAdvanced: ['Advanced: contract data (JSON)', 'متقدم: بيانات العقد (JSON)'], ctBadJson: ['Contract data is not valid JSON', 'بيانات العقد غير صالحة'],
@@ -344,6 +355,13 @@ return {quote,band,D,ISO};
         <div id="cr-taxes">${(Array.isArray(d.taxes) && d.taxes.length ? d.taxes : [{ name: '', pct: '' }]).map(taxRow).join('')}</div>
         <button class="btn ghost sm" data-act="ctTaxAdd">${ic('plus', 'sm')} ${t('ctTaxAdd')}</button>
       </div>
+      <div class="card flat" style="margin-top:12px"><b>${t('ctFx')}</b><p class="small muted" style="margin:4px 0 8px">${t('ctFxHint')}</p>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div class="f"><label for="cr-fxto">${t('ctFxTo')}</label><select id="cr-fxto" class="inp"><option value="">${t('ctFxNone')}</option>${['SAR', 'USD', 'AED', 'KWD', 'QAR', 'BHD', 'OMR', 'EUR', 'GBP'].map(x => `<option ${d.fx && d.fx.to === x ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+          <div class="f"><label for="cr-fxrate">${t('ctFxRate')}</label><input id="cr-fxrate" class="inp" type="number" step="any" min="0" value="${esc(String((d.fx && d.fx.rate) || ''))}" placeholder="12.20" style="max-width:130px"></div>
+          <div class="f"><label for="cr-fxbuf">${t('ctFxBuf')}</label><input id="cr-fxbuf" class="inp" type="number" step="any" min="0" value="${esc(String((d.fx && d.fx.buffer != null) ? d.fx.buffer : 1.5))}" style="max-width:110px"></div>
+          <button class="btn ghost sm" data-act="ctFxSuggest">${ic('refresh', 'sm')} ${t('ctFxSuggest')}</button>
+        </div><p class="tiny muted" id="cr-fxline" style="margin-top:6px">${fxLine(c, d)}</p></div>
       <div class="card flat" style="margin-top:12px"><b>${t('ctStop2')}</b><p class="small muted" style="margin:4px 0 8px">${t('ctStopHint')}</p>
         <div id="cr-stops">${(Array.isArray(d.stop_sales) ? d.stop_sales : []).map(stopRow).join('')}</div>
         <button class="btn ghost sm" data-act="ctStopAdd">${ic('plus', 'sm')} ${t('ctStopAdd')}</button>
@@ -371,6 +389,8 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
   function stopRow(x) {
     return `<div class="row ct-stop" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input class="inp ct-sf" type="date" value="${esc(x.from || '')}" style="max-width:160px"><input class="inp ct-st" type="date" value="${esc(x.to || '')}" style="max-width:160px"><input class="inp ct-sn" placeholder="${t('ctStopNote')}" value="${esc(x.note || '')}" style="max-width:220px"><button class="icon-btn" data-act="ctStopDel" aria-label="${t('delete')}">${ic('x', 'sm')}</button></div>`;
   }
+  const FX_SAR = { USD: 3.75, EUR: 4.05, GBP: 4.75, AED: 1.021, KWD: 12.2, QAR: 1.03, BHD: 9.95, OMR: 9.74, SAR: 1 };
+  const fxLine = (c, d) => d && d.fx && d.fx.rate ? esc(t('ctFxNow', { a: c.currency || '', r: d.fx.rate, b: d.fx.to, f: d.fx.buffer || 0 })) : '';
   const readStops = () => $$('.ct-stop').map(r => ({ from: r.querySelector('.ct-sf').value, to: r.querySelector('.ct-st').value || r.querySelector('.ct-sf').value, note: r.querySelector('.ct-sn').value.trim() })).filter(x => x.from);
   function taxRow(x) {
     return `<div class="row ct-tax" style="gap:6px;margin-bottom:6px;flex-wrap:wrap"><input class="inp ct-tn" placeholder="${t('ctTaxName')}" value="${esc(x.name || '')}" style="max-width:200px"><div class="row" style="gap:4px"><input class="inp ct-tp" type="number" min="0" step="any" value="${esc(String(x.pct ?? ''))}" style="max-width:90px">%</div><label class="row small" style="gap:4px"><input type="checkbox" class="ct-tc" ${x.compound ? 'checked' : ''}> ${t('ctTaxComp')}</label></div>`;
@@ -381,6 +401,8 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
     data.kind = $('#cr-kind').value;
     data.rates_include_tax = !!($('#cr-taxincl') || {}).checked;
     data.stop_sales = readStops();
+    const fxTo = ($('#cr-fxto') || {}).value || '', fxRate = Number(($('#cr-fxrate') || {}).value) || 0;
+    if (fxTo && fxRate > 0) data.fx = { to: fxTo, rate: fxRate, buffer: Math.max(0, Number(($('#cr-fxbuf') || {}).value) || 0), set_at: new Date().toISOString().slice(0, 10) }; else delete data.fx;
     data.taxes = $$('.ct-tax').map(r => ({ name: r.querySelector('.ct-tn').value.trim(), pct: Number(r.querySelector('.ct-tp').value) || 0, compound: r.querySelector('.ct-tc').checked })).filter(x => x.pct > 0);
     return Object.assign({}, CTD, { title: v('cr-title') || 'Contract', destination: v('cr-dest') || '', kind: data.kind, currency: (v('cr-cur') || 'USD').toUpperCase(),
       valid_from: v('cr-from'), valid_to: v('cr-to'), book_by: v('cr-bookby'), margin_type: $('#cr-mt') ? $('#cr-mt').value : CTD.margin_type, margin_value: $('#cr-mv') ? (Number($('#cr-mv').value) || 0) : CTD.margin_value, data });
@@ -391,6 +413,13 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
     ctStopAdd: () => { const box = $('#cr-stops'); if (box) box.insertAdjacentHTML('beforeend', stopRow({})); },
     ctStopDel: el => { const r = el.closest('.ct-stop'); if (r) r.remove(); },
     ctSaveStops: async () => { try { await Cloud.rpc('partner_set_stop_sales', { p_id: CTD.id, p_stop_sales: readStops() }); toast(t('saved')); closeModal(); CT = null; loadContracts(); } catch (e) { toast(friendlyErr(e)); } },
+    ctFxSuggest: () => {
+      const from = (($('#cr-cur') || {}).value || '').toUpperCase(), to = ($('#cr-fxto') || {}).value || 'SAR';
+      if (!$('#cr-fxto').value) $('#cr-fxto').value = to;
+      const r = FX_SAR[from] && FX_SAR[to] ? Math.round(FX_SAR[from] / FX_SAR[to] * 10000) / 10000 : 0;
+      if (!r) return toast(t('ctFxNoRate'));
+      $('#cr-fxrate').value = r; toast(t('ctFxSuggested'));
+    },
     ctTaxAdd: () => { const box = $('#cr-taxes'); if (box) box.insertAdjacentHTML('beforeend', taxRow({ name: '', pct: '' })); },
     ctMarginDlg: el => {
       if (!OWN()) return toast(t('ctOwnerOnly'));

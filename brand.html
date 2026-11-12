@@ -112,6 +112,10 @@ footer{background:var(--ink);color:#93A4A0;font-size:13px;padding:0 0 40px}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgb(255 255 255 / .1);padding-top:24px;gap:16px;flex-wrap:wrap}
 footer img{height:24px}
 
+.fab{position:fixed;inset-inline-start:22px;bottom:22px;z-index:9;display:flex;align-items:center;gap:10px;background:var(--brand);color:#fff;text-decoration:none;border-radius:999px;padding:8px 18px 8px 8px;box-shadow:0 10px 30px rgb(14 124 116 / .35);font-weight:600;font-size:14px}
+.fab:hover{background:var(--brand-ink)}
+.fab span.i{width:40px;height:40px;border-radius:50%;background:#fff;display:grid;place-items:center}
+.fab img{width:28px;height:28px}
 @media (max-width:900px){
   .hero .wrap,.contact .grid,.type,.rules{grid-template-columns:1fr}
   .idea,.voice{grid-template-columns:1fr}
@@ -232,6 +236,7 @@ footer img{height:24px}
   </div>
 </div></section>
 </main>
+<a class="fab" href="#contact" aria-label="تواصل معنا"><span class="i"><img src="assets/brand/wejha-mark.svg" alt=""></span>تواصل معنا</a>
 
 <footer><div class="wrap">
   <img src="assets/brand/wejha-logo-white.svg" alt="wejha">
