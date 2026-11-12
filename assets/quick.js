@@ -87,20 +87,21 @@
   const PKEY = 'wj-pk-photos-v1';
   let PHOTOS = {}; try { PHOTOS = JSON.parse(localStorage.getItem(PKEY) || '{}') || {}; } catch (e) { }
   function applyPhotos() {
-    if (typeof PACKAGES === 'undefined') return;
-    for (const pk of PACKAGES) { const ph = PHOTOS[pk.id]; if (ph && ph.url && !pk.cover) { pk.cover = ph.url; pk.coverCredit = { author: ph.author, author_link: ph.author_link }; } }
+    if (typeof allPackages !== 'function') return;
+    for (const pk of allPackages()) { const ph = PHOTOS[pk.id]; if (ph && ph.url && !pk.cover) { pk.cover = ph.url; pk.coverCredit = { author: ph.author, author_link: ph.author_link }; } }
   }
   let photoBusy = false;
   async function loadPhotos() {
-    if (photoBusy || !Cloud.on || !Cloud.sb || typeof PACKAGES === 'undefined') return;
-    const todo = PACKAGES.filter(pk => PHOTO_Q[pk.id] && !(PHOTOS[pk.id] && PHOTOS[pk.id].url));
+    if (photoBusy || !Cloud.on || !Cloud.sb || typeof allPackages !== 'function') return;
+    const qOf = pk => PHOTO_Q[pk.id] || (pk.custom && !pk.cover ? String(tx(pk.dest, 'en') || '').split(/[·,]/)[0].trim() + ' landmark' : '');
+    const todo = allPackages().filter(pk => qOf(pk).length > 9 && !pk.cover && !(PHOTOS[pk.id] && PHOTOS[pk.id].url));
     if (!todo.length) return;
     photoBusy = true;
     try {
       const { data } = await Cloud.sb.auth.getSession(); const tok = data && data.session && data.session.access_token; if (!tok) return;
       for (const pk of todo) {
         try {
-          const r = await fetch(PHOTO_URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: tok, query: PHOTO_Q[pk.id] }) });
+          const r = await fetch(PHOTO_URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: tok, query: qOf(pk) }) });
           const j = await r.json(); const ph = j && (j.photo || (j.url ? j : null));
           if (ph && ph.url) PHOTOS[pk.id] = { url: ph.url, author: ph.author || '', author_link: ph.author_link || '' };
         } catch (e) { }
@@ -110,7 +111,7 @@
     } finally { photoBusy = false; }
   }
   applyPhotos();
-  setTimeout(loadPhotos, 2500);
+  setTimeout(loadPhotos, 2500); setTimeout(() => { applyPhotos(); loadPhotos(); }, 12000);
 
   Object.assign(ACT, {
     qfGo: async el => {
