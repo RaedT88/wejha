@@ -2411,12 +2411,14 @@ const dspMe = () => { try { return localStorage.getItem('wejha_me') || ''; } cat
 const dspDuty = () => { const d = DSP.rows.__duty__; const off = (d && d.history && d.history.off) || []; return DSP_STAFF().filter(s => !off.includes(s.id)); };
 const dspCloud = () => typeof opsLive === 'function' && opsLive() && Cloud.sb;
 
-async function dspLoad() {
-  if (Cloud.on && Cloud.sb && !DSP.team) {
+async function dspTeam() {
+  if (Cloud.on && Cloud.sb && Cloud.agencyId && !DSP.team) {
     try { const { data } = await Cloud.sb.from('agency_members').select('user_id, name, email, role').eq('agency_id', Cloud.agencyId).order('created_at');
       DSP.team = (data || []).filter(m => m.role !== 'viewer').map(m => ({ id: m.user_id, name: m.name || String(m.email || '').split('@')[0] || '—' })); } catch (e) { DSP.team = []; }
-    if (Cloud.user && !dspMe()) { try { localStorage.setItem('wejha_me', Cloud.user.id); } catch (e) { } }
+    if (Cloud.user && (!dspMe() || /^s\d$/.test(dspMe()))) { try { localStorage.setItem('wejha_me', Cloud.user.id); } catch (e) { } }
   }
+}
+async function dspLoad() {
   if (dspCloud()) {
     const { data, error } = await Cloud.sb.from('ops_assignments').select('*');
     if (!error) { DSP.rows = {}; (data || []).forEach(r => { DSP.rows[r.request_id] = r; }); DSP.loaded = true; }
@@ -2441,6 +2443,7 @@ function dspNext(afterId, rr) {
 async function dspTick(orders) {
   if (DSP.busy) return; DSP.busy = true;
   try {
+    if (!DSP.team) await dspTeam();
     if (!DSP.loaded) await dspLoad();
     const now = Date.now(), sla = DSP_SLA() * 60000, changed = [];
     const meta = DSP.rows.__duty__ || { request_id: '__duty__', staff_id: null, history: { off: [], rr: 0 } };
