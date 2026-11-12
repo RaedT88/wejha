@@ -34,7 +34,7 @@
     if (!list.length) return `<p class="muted small">${t('lv_none')}</p>`;
     return list.map(o => { const k = kindOf(o); const city = (typeof dspCityOf === 'function' && dspCityOf(o)) || ''; return `<button class="lv-row" data-act="lvOpen" data-v="${esc(o.request_id || '')}">
       <i style="background:${isNew(o) ? COL.fresh : COL[k]}"></i>
-      <div class="grow"><b>${esc(o.hotel || (city ? dspCityName(city) : '') || fmtPhone(o.sender))}</b><span>${esc(String(o.request_text || '').split('\n')[0].slice(0, 60))}</span></div>
+      <div class="grow"><b>${esc(o.hotel || (city ? dspCityName(city) : '') || fmtPhone(o.sender))}</b><span>${esc(reqText(o.request_text).split('\n')[0].slice(0, 60))}</span></div>
       <div class="lv-meta">${opsPill(o.status)}<span>${opsTime(o.updated_at)}</span></div></button>`; }).join('');
   }
   function body() {
@@ -66,7 +66,7 @@
       const col = fresh ? COL.fresh : staff ? COL.staff : paid ? COL.paid : COL.active;
       const r = Math.min(30, 11 + Math.sqrt(n) * 4);
       const icon = LL.divIcon({ className: '', html: `<div class="lv-dot ${fresh ? 'fresh' : ''}" style="--c:${col};width:${r * 2}px;height:${r * 2}px"><span>${n}</span></div>`, iconSize: [r * 2, r * 2], iconAnchor: [r, r] });
-      const pop = `<div class="lv-pop"><b>${esc(dspCityName(g.k))} · ${n}</b>${g.list.slice(0, 6).map(o => `<div><span>${esc(o.hotel || String(o.request_text || '').split('\n')[0].slice(0, 40))}</span> ${opsPill(o.status)}</div>`).join('')}</div>`;
+      const pop = `<div class="lv-pop"><b>${esc(dspCityName(g.k))} · ${n}</b>${g.list.slice(0, 6).map(o => `<div><span>${esc(o.hotel || reqText(o.request_text).split('\n')[0].slice(0, 40))}</span> ${opsPill(o.status)}</div>`).join('')}</div>`;
       LL.marker(g.c, { icon }).bindPopup(pop, { maxWidth: 320 }).bindTooltip(`${esc(dspCityName(g.k))} · ${n}`).addTo(LV.layer);
       pts.push(g.c);
     }

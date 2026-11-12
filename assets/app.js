@@ -2152,6 +2152,15 @@ window.LACT = {
   for (const [k, [en, ar]] of Object.entries(T)) { I18N.en[k] = en; I18N.ar[k] = ar; }
 })();
 
+// WhatsApp button payloads (lc_offer:wamid…:1:2, approve_payment…) shown as readable text.
+function reqText(v) {
+  const ar = L() === 'ar';
+  return String(v || '')
+    .replace(/\blc_offer:wamid\.[A-Za-z0-9+/=_-]+:(\d+):(\d+)/g, (m, h, o) => ar ? `🔘 اختار العرض ${o} (فندق ${h})` : `🔘 Picked offer ${o} (hotel ${h})`)
+    .replace(/\blc_(?:name|info):[^\s]*/g, ar ? '🔘 ضغط زر' : '🔘 Tapped a button')
+    .replace(/\bapprove_payment\b/g, ar ? '🔘 وافق على الدفع' : '🔘 Approved payment')
+    .replace(/\baccept_nonref\b/g, ar ? '🔘 قبل شرط عدم الاسترداد' : '🔘 Accepted non-refundable');
+}
 const OPS = { data: null, at: 0, loading: false, err: null, f: 'all', q: '', sel: null, mode: {}, timer: null, phones: null, demo: null };
 const OPS_GROUPS = {
   all: null, staff: ['human_review', 'failed'], active: ['received', 'processing', 'searching', 'quoted', 'replied', 'payment_pending', 'hold'],
@@ -2242,7 +2251,7 @@ function opsBody() {
     <tbody>${list.length ? list.map(o => `
       <tr class="click ${OPS_GROUPS.staff.includes(o.status) ? 'row-alert' : ''}" data-act="opsOpen" data-id="${esc(o.request_id)}" tabindex="0">
         <td class="who"><b class="num" dir="ltr">${fmtPhone(o.sender)}</b><span>${esc(o.request_id)}</span></td>
-        <td class="small"><b>${esc(o.hotel || o.city || '—')}</b><div class="tiny muted ellip" dir="auto">${esc((o.request_text || '').split('\n')[0].slice(0, 70))}</div></td>
+        <td class="small"><b>${esc(o.hotel || o.city || '—')}</b><div class="tiny muted ellip" dir="auto">${esc(reqText(o.request_text).split('\n')[0].slice(0, 70))}</div></td>
         <td class="small">${o.checkin ? `${fmtShort(o.checkin)} → ${fmtShort(o.checkout)}` : '—'}</td>
         <td class="r num">${o.amount_sar ? sar(o.amount_sar) : '—'}</td>
         <td>${opsPill(o.status)}</td>
@@ -2274,7 +2283,7 @@ function opsPaintDetail() {
       <div class="sumrow"><span>${t('oc_request')}</span><span>${esc(o.hotel || o.city || '—')}</span></div>
       <div class="sumrow"><span>${t('oc_stay')}</span><span>${o.checkin ? `${fmtDate(o.checkin)} → ${fmtDate(o.checkout)}` : '—'}</span></div>
       <div class="sumrow"><span>${t('oc_amount')}</span><span class="num">${o.amount_sar ? Math.round(o.amount_sar).toLocaleString('en-US') + (L() === 'ar' ? ' ر.س' : ' SAR') : '—'}</span></div>
-      ${o.request_text ? `<div><div class="tiny muted">${t('od_original')}</div><div class="quote-box" dir="auto">${esc(o.request_text)}</div></div>` : ''}
+      ${o.request_text ? `<div><div class="tiny muted">${t('od_original')}</div><div class="quote-box" dir="auto">${esc(reqText(o.request_text))}</div></div>` : ''}
       <div><div class="tiny muted" style="margin-bottom:6px">${t('od_timeline')}</div>
         <div class="feed">${(o.events || []).slice().reverse().slice(0, 14).map(e => `<div class="it"><span class="dot">${ic('clock', 'sm')}</span><div><span dir="auto">${esc(e.text)}</span><div class="tiny muted">${opsTime(e.at)}</div></div></div>`).join('') || `<p class="tiny muted">—</p>`}</div></div>
     </div>

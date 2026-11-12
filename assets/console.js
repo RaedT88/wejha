@@ -89,7 +89,7 @@
     const rows = opsOrders().filter(whyOf).sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
     return `<div class="card" style="padding:12px 14px"><p class="small muted" style="margin-bottom:10px">${t('oc_issuesSub')}</p>
       ${rows.length ? `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('oc_customer')}</th><th>${t('oc_request')}</th><th>${t('oc_why')}</th><th>${t('oc_amount')}</th><th>${t('oc_updated')}</th></tr></thead><tbody>
-      ${rows.map(o => `<tr class="click row-alert" data-act="opsOpen" data-id="${esc(o.request_id)}" tabindex="0"><td dir="ltr" style="text-align:start">${fmtPhone(o.sender)}</td><td><b>${esc(o.hotel || o.city || '—')}</b><div class="small muted">${esc(String(o.request_text || '').slice(0, 70))}</div></td><td class="small">${esc(whyOf(o))}</td><td class="small">${o.amount_sar ? sar(o.amount_sar) : '—'}</td><td class="small">${opsTime(o.updated_at)}</td></tr>`).join('')}
+      ${rows.map(o => `<tr class="click row-alert" data-act="opsOpen" data-id="${esc(o.request_id)}" tabindex="0"><td dir="ltr" style="text-align:start">${fmtPhone(o.sender)}</td><td><b>${esc(o.hotel || o.city || '—')}</b><div class="small muted">${esc(reqText(o.request_text).slice(0, 70))}</div></td><td class="small">${esc(whyOf(o))}</td><td class="small">${o.amount_sar ? sar(o.amount_sar) : '—'}</td><td class="small">${opsTime(o.updated_at)}</td></tr>`).join('')}
       </tbody></table></div>` : `<p class="muted">${t('oc_none')}</p>`}</div>`;
   }
   function vReports() {
