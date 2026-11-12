@@ -63,6 +63,11 @@ button,input,select,textarea{font:inherit;color:inherit}
 .powered{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted);padding:8px 6px;border-top:1px solid var(--line)}
 .wj{font-family:var(--f-display);font-weight:700;color:var(--ink);font-size:13px;letter-spacing:-.02em}
 .wj i{font-style:normal;color:var(--accent)}
+.wj-logo img{display:block;height:34px;width:auto}
+a.powered{text-decoration:none}
+.wj-pw{height:18px;width:auto;display:block}
+:root[data-theme="dark"] .wj-pw,:root[data-theme="dark"] .wj-logo img{filter:brightness(0) invert(1)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .wj-pw{filter:brightness(0) invert(1)}}
 .main{display:flex;flex-direction:column;min-width:0;height:100%;overflow:hidden}
 .top{display:flex;align-items:center;gap:12px;padding:14px 28px;border-bottom:1px solid var(--line);background:color-mix(in oklab,var(--bg) 85%,transparent)}
 .top .search{flex:1;max-width:380px;position:relative}

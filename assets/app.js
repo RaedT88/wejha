@@ -807,7 +807,7 @@ function renderShell() {
       <button class="btn sm" data-act="toggleLang">${ic('globe', 'sm')} ${L() === 'ar' ? 'English' : 'العربية'}</button>
       ${cloud ? `<div class="me"><b>${esc((Cloud.user.user_metadata && Cloud.user.user_metadata.name) || Cloud.user.email)}</b><span>${t('role_' + Cloud.role)}${trialLeft !== null ? ' · ' + t('trialLeft', { n: Math.max(0, trialLeft) }) : ''}</span></div>
       <button class="btn ghost sm" data-act="signOut">${ic('back', 'sm flip')} ${t('signOut')}</button>` : `<button class="btn ghost sm" data-act="resetDemo">${ic('refresh', 'sm')} ${t('resetDemo')}</button>`}
-      <div class="powered"><span>${t('poweredBy')}</span><span class="wj">wejha<i>.</i></span></div>
+      <a class="powered" href="brand.html" target="_blank" rel="noopener"><span>${t('poweredBy')}</span><img src="assets/brand/wejha-logo.svg" alt="wejha" height="18" class="wj-pw"></a>
     </div>
   </aside>
   <div class="main">
@@ -1860,7 +1860,7 @@ function renderAuth(mode, err, info) {
     <button class="link small" data-act="signOut">${t('signOut')}</button>`;
   if (mode === 'check') body = `<h1>${t('checkEmail')}</h1><p class="muted">${t('checkEmailSub')}</p><button class="btn block" data-act="authMode" data-m="signin">${t('backToSignIn')}</button>`;
   $('#app').innerHTML = `<div class="auth"><div class="auth-card">
-    <div class="row between"><span class="wj" style="font-size:22px">wejha<i>.</i></span><button class="btn sm" data-act="authLang">${ic('globe', 'sm')} ${L() === 'ar' ? 'English' : 'العربية'}</button></div>
+    <div class="row between"><picture class="wj-logo"><source srcset="assets/brand/wejha-logo-white.svg" media="(prefers-color-scheme: dark)"><img src="assets/brand/wejha-logo.svg" alt="wejha" height="34"></picture><button class="btn sm" data-act="authLang">${ic('globe', 'sm')} ${L() === 'ar' ? 'English' : 'العربية'}</button></div>
     ${err ? `<div class="warn-box" role="alert">${ic('alert', 'sm')}<span>${esc(err)}</span></div>` : ''}${info ? `<div class="warn-box ok" role="status">${ic('check', 'sm')}<span>${esc(info)}</span></div>` : ''}
     ${body}</div><p class="tiny muted auth-foot">${t('authFoot')}</p></div><div class="toast" id="toast" role="status" aria-live="polite"></div>`;
   const fm = $('#auth-form'); if (fm) { fm.addEventListener('submit', onAuthSubmit); const i = fm.querySelector('input'); if (i) i.focus(); }
@@ -1942,7 +1942,7 @@ function offerToken() {
   } catch (e) { return null; }
 }
 function offerMessage(title, text) {
-  $('#app').innerHTML = `<div class="auth"><div class="auth-card" style="text-align:center;align-items:center"><span class="wj" style="font-size:22px">wejha<i>.</i></span><h1>${esc(title)}</h1><p class="muted">${esc(text)}</p></div></div>`;
+  $('#app').innerHTML = `<div class="auth"><div class="auth-card" style="text-align:center;align-items:center"><picture class="wj-logo"><source srcset="assets/brand/wejha-logo-white.svg" media="(prefers-color-scheme: dark)"><img src="assets/brand/wejha-logo.svg" alt="wejha" height="34"></picture><h1>${esc(title)}</h1><p class="muted">${esc(text)}</p></div></div>`;
 }
 async function bootOffer(tok, cfg) {
   S = authSkeleton();

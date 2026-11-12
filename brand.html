@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>وجهة · الهوية البصرية — Wejha brand identity</title>
+<meta name="description" content="Wejha — the back office and quotation platform for travel agencies. Brand identity, logo, colours and contact.">
+<link rel="icon" type="image/svg+xml" href="assets/brand/wejha-mark.svg">
+<link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
+<meta name="theme-color" content="#0E7C74">
+<meta property="og:title" content="Wejha — رحلتك كلها… في إيد واحدة">
+<meta property="og:image" content="assets/brand/wejha-app-icon-512.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#0E7C74; --brand-ink:#0A5852; --brand-soft:#E3F2F0; --accent:#E39B32; --accent-soft:#FBEBD3;
+  --ink:#13201E; --muted:#5B6A67; --surface:#FFFFFF; --sunken:#F3F5F4; --sand:#F6EFE3; --line:#DDE4E2;
+  --f-d:'Bricolage Grotesque','Readex Pro',system-ui,sans-serif; --f-b:'Readex Pro',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r:12px; --rl:24px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:var(--f-b);color:var(--ink);background:var(--surface);line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px}
+.en{font-family:var(--f-d);direction:ltr;unicode-bidi:isolate}
+.muted{color:var(--muted)}
+.kicker{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 10px}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:rgb(255 255 255 / .86);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;height:68px;gap:16px}
+.top img{height:30px;display:block}
+.top nav{display:flex;gap:22px;font-size:14px}
+.top nav a{color:var(--muted);text-decoration:none}
+.top nav a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 20px;border-radius:var(--r);font:600 15px var(--f-b);text-decoration:none;border:1px solid var(--line);color:var(--ink);background:var(--surface)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.pri:hover{background:var(--brand-ink)}
+
+/* hero */
+.hero{background:var(--sand);position:relative;overflow:hidden}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding-top:80px;padding-bottom:88px}
+.hero h1{font-family:var(--f-d);font-size:clamp(40px,6vw,68px);line-height:1.05;margin:0 0 18px;letter-spacing:-.02em}
+.hero h1 .en{display:block;font-size:.5em;color:var(--muted);font-weight:600;margin-top:12px;letter-spacing:-.01em}
+.hero p.lead{font-size:18px;max-width:34em;margin:0 0 28px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.stage{position:relative;aspect-ratio:1;max-width:420px;justify-self:center;width:100%}
+.stage .disc{position:absolute;inset:6%;border-radius:50%;background:var(--surface);box-shadow:0 30px 80px rgb(19 32 30 / .12)}
+.stage img{position:absolute;inset:18%;width:64%;height:64%}
+
+section{padding:88px 0;border-bottom:1px solid var(--line)}
+section h2{font-family:var(--f-d);font-size:clamp(28px,3.4vw,40px);line-height:1.15;margin:0 0 14px;letter-spacing:-.01em}
+section .intro{max-width:44em;font-size:17px;margin:0 0 40px}
+
+/* idea */
+.idea{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--rl);padding:28px}
+.card h3{margin:14px 0 6px;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.dot{width:44px;height:44px;border-radius:14px;display:grid;place-items:center}
+.dot svg{width:24px;height:24px}
+
+/* logo grid */
+.logos{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+.tile{border-radius:var(--rl);border:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;background:var(--surface)}
+.tile .art{flex:1;min-height:200px;display:grid;place-items:center;padding:32px}
+.tile .art img{max-width:100%;max-height:120px}
+.tile .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 16px;border-top:1px solid var(--line);font-size:13px}
+.tile .cap a{font-weight:600;text-decoration:none}
+.w3{grid-column:span 3}.w2{grid-column:span 2}
+.on-light{background:var(--surface)}.on-dark{background:var(--ink)}.on-brand{background:var(--brand)}.on-sand{background:var(--sand)}
+
+/* rules */
+.rules{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+.rules ul{margin:8px 0 0;padding-inline-start:20px}
+.rules li{margin:4px 0}
+.do h3{color:#1E8A4C}.dont h3{color:#BF3D37}
+
+/* colours */
+.sw{display:grid;grid-template-columns:2fr 2fr 1fr 1fr 1fr;gap:14px}
+.chip{border-radius:var(--rl);overflow:hidden;border:1px solid var(--line)}
+.chip .c{height:150px}
+.chip .t{padding:14px 16px}
+.chip b{display:block;font-size:15px}
+.chip code{font:500 13px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted);direction:ltr;display:inline-block}
+.status{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.pill{display:inline-flex;align-items:center;height:30px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:600}
+
+/* type */
+.type{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.spec{font-family:var(--f-d);font-size:64px;line-height:1;margin:6px 0 10px;letter-spacing:-.02em}
+.spec.ar{font-family:var(--f-b);font-weight:600}
+
+/* voice */
+.voice{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.bubble{background:var(--sunken);border-radius:18px 18px 4px 18px;padding:16px 18px;font-size:15px;margin-top:12px}
+
+/* contact */
+.contact{background:var(--ink);color:#E6EEEC;border-bottom:0}
+.contact h2{color:#fff}
+.contact .grid{display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center}
+.cl{display:grid;gap:12px}
+.cl a{display:flex;align-items:center;gap:14px;background:rgb(255 255 255 / .06);border:1px solid rgb(255 255 255 / .12);border-radius:16px;padding:16px 18px;color:#fff;text-decoration:none;font-size:16px}
+.cl a:hover{background:rgb(255 255 255 / .1)}
+.cl .ic{width:40px;height:40px;border-radius:12px;background:var(--brand);display:grid;place-items:center;flex:none}
+.cl .ic svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.cl small{display:block;color:#93A4A0;font-size:12px}
+footer{background:var(--ink);color:#93A4A0;font-size:13px;padding:0 0 40px}
+footer .wrap{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgb(255 255 255 / .1);padding-top:24px;gap:16px;flex-wrap:wrap}
+footer img{height:24px}
+
+@media (max-width:900px){
+  .hero .wrap,.contact .grid,.type,.rules{grid-template-columns:1fr}
+  .idea,.voice{grid-template-columns:1fr}
+  .logos{grid-template-columns:1fr 1fr}.w3,.w2{grid-column:span 1}
+  .sw{grid-template-columns:1fr 1fr}
+  .top nav{display:none}
+  section{padding:64px 0}
+}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="wrap">
+  <img src="assets/brand/wejha-logo.svg" alt="wejha">
+  <nav aria-label="الأقسام">
+    <a href="#idea">الفكرة</a><a href="#logo">الشعار</a><a href="#colour">الألوان</a><a href="#type">الخطوط</a><a href="#voice">الأسلوب</a><a href="#contact">تواصل</a>
+  </nav>
+  <a class="btn pri" href="#contact">تواصل معنا</a>
+</div></header>
+
+<main>
+<div class="hero"><div class="wrap">
+  <div>
+    <p class="kicker">الهوية البصرية · Brand identity</p>
+    <h1>رحلتك كلها… في إيد واحدة<span class="en">Your whole trip, in one hand.</span></h1>
+    <p class="lead"><b>وجهة</b> منصّة واحدة لشركات السياحة: العقود والأسعار، الباقات الجاهزة، وكيل الحجز على واتساب، متابعة الطلبات، وعروض أسعار بهوية الشركة تُرسل للعميل كرابط و PDF.</p>
+    <div class="cta"><a class="btn pri" href="#logo">شاهد الشعار</a><a class="btn" href="https://wa.me/966544381103" target="_blank" rel="noopener">واتساب</a></div>
+  </div>
+  <div class="stage" aria-hidden="true"><div class="disc"></div><img src="assets/brand/wejha-mark.svg" alt=""></div>
+</div></div>
+
+<section id="idea"><div class="wrap">
+  <p class="kicker">الفكرة</p>
+  <h2>يد مفتوحة تحمل الفندق، ونجمة للوجهة</h2>
+  <p class="intro">الشعار يقول ما تفعله وجهة: تحمل عن شركة السياحة تشغيل الفنادق كله — العقود والأسعار والعروض والحجوزات — بخفّة وعناية، وكأنها في يد واحدة.</p>
+  <div class="idea">
+    <div class="card"><div class="dot" style="background:var(--brand-soft)"><svg viewBox="0 0 24 24" fill="none" stroke="#0E7C74" stroke-width="2" stroke-linecap="round"><path d="M3 12c1 4 4.5 7 9 7s7.5-3 9-6"/></svg></div><h3>الكف</h3><p>منحنى ناعم يشبه الهلال: ضيافة، أمان، وحِمل خفيف. باللون الأخضر المائي لوجهة.</p></div>
+    <div class="card"><div class="dot" style="background:var(--sunken)"><svg viewBox="0 0 24 24" fill="#13201E"><path d="M7 4h10a1 1 0 0 1 1 1v15H6V5a1 1 0 0 1 1-1zm2 3v2h2V7zm4 0v2h2V7zm-4 4v2h2v-2zm4 0v2h2v-2zm-2 5v4h2v-4z"/></svg></div><h3>الفندق</h3><p>المنتج الأساسي: الغرف والعقود والأسعار. شكل بسيط وثابت يُقرأ في أصغر الأحجام.</p></div>
+    <div class="card"><div class="dot" style="background:var(--accent-soft)"><svg viewBox="0 0 24 24" fill="#E39B32"><path d="M12 2l2.2 5.8L20 10l-5.8 2.2L12 18l-2.2-5.8L4 10l5.8-2.2z"/></svg></div><h3>النجمة</h3><p>الوجهة والتجربة المميزة. لمسة ذهبية واحدة فقط — في الشعار والنقطة بعد الاسم.</p></div>
+  </div>
+</div></section>
+
+<section id="logo"><div class="wrap">
+  <p class="kicker">الشعار</p>
+  <h2>الشعار وأشكاله</h2>
+  <p class="intro">استخدم الشعار الكامل على الخلفيات الفاتحة، والنسخة البيضاء على الأخضر أو الداكن أو الصور. الأيقونة وحدها للمساحات الصغيرة وصورة واتساب.</p>
+  <div class="logos">
+    <div class="tile w3"><div class="art on-light"><img src="assets/brand/wejha-logo.svg" alt="wejha logo"></div><div class="cap"><span>الشعار الأساسي</span><a href="assets/brand/wejha-logo.svg" download>SVG</a></div></div>
+    <div class="tile w3"><div class="art on-dark"><img src="assets/brand/wejha-logo-white.svg" alt="wejha logo white"></div><div class="cap"><span>على خلفية داكنة</span><a href="assets/brand/wejha-logo-white.svg" download>SVG</a></div></div>
+    <div class="tile w2"><div class="art on-sand"><img src="assets/brand/wejha-mark.svg" alt="wejha mark"></div><div class="cap"><span>الأيقونة</span><a href="assets/brand/wejha-mark.svg" download>SVG</a></div></div>
+    <div class="tile w2"><div class="art on-brand"><img src="assets/brand/wejha-mark-white.svg" alt="wejha mark white"></div><div class="cap"><span>الأيقونة على الأخضر</span><a href="assets/brand/wejha-mark-white.svg" download>SVG</a></div></div>
+    <div class="tile w2"><div class="art on-light"><img src="assets/brand/wejha-app-icon.svg" alt="wejha app icon" style="max-height:132px;border-radius:28px"></div><div class="cap"><span>أيقونة التطبيق / واتساب</span><a href="assets/brand/wejha-app-icon-512.png" download>PNG</a></div></div>
+  </div>
+  <div class="rules">
+    <div class="card do"><h3>✓ افعل</h3><ul>
+      <li>اترك مساحة فارغة حول الشعار تساوي ضعف ارتفاع باب الفندق.</li>
+      <li>أصغر حجم: الأيقونة 20px، والشعار الكامل 96px عرضًا.</li>
+      <li>اكتب الاسم بالإنجليزية بحروف صغيرة <span class="en">wejha</span> مع النقطة الذهبية، وبالعربية «وجهة».</li>
+    </ul></div>
+    <div class="card dont"><h3>✕ لا تفعل</h3><ul>
+      <li>لا تمدّ الشعار أو تدوّره أو تضيف له ظلًا أو إطارًا.</li>
+      <li>لا تغيّر ألوانه — الكف أخضر، الفندق داكن، النجمة ذهبية.</li>
+      <li>لا تضع النسخة الملوّنة فوق صورة مزدحمة؛ استخدم الأبيض.</li>
+    </ul></div>
+  </div>
+</div></section>
+
+<section id="colour" style="background:var(--sunken)"><div class="wrap">
+  <p class="kicker">الألوان</p>
+  <h2>أخضر مائي وداكن، بلمسة ذهب ورمل</h2>
+  <p class="intro">الأخضر للأفعال والكف، الداكن للنصوص والفندق، الذهبي شرارة صغيرة فقط، والرملي يدفّئ صفحات العروض والتسويق.</p>
+  <div class="sw">
+    <div class="chip"><div class="c" style="background:#0E7C74"></div><div class="t"><b>أخضر وجهة · Brand</b><code>#0E7C74</code></div></div>
+    <div class="chip"><div class="c" style="background:#13201E"></div><div class="t"><b>الداكن · Ink</b><code>#13201E</code></div></div>
+    <div class="chip"><div class="c" style="background:#E39B32"></div><div class="t"><b>ذهبي · Accent</b><code>#E39B32</code></div></div>
+    <div class="chip"><div class="c" style="background:#F6EFE3"></div><div class="t"><b>رملي · Sand</b><code>#F6EFE3</code></div></div>
+    <div class="chip"><div class="c" style="background:#E3F2F0"></div><div class="t"><b>أخضر فاتح</b><code>#E3F2F0</code></div></div>
+  </div>
+  <div class="status" aria-label="ألوان حالات الطلبات">
+    <span class="pill" style="background:#E2F2E8;color:#1E8A4C">عرض مُرسل · مدفوع</span>
+    <span class="pill" style="background:#F7ECD8;color:#8F5A06">بانتظار الدفع</span>
+    <span class="pill" style="background:#FCE6D6;color:#A8480A">يحتاج موظف</span>
+    <span class="pill" style="background:#F8E1DF;color:#A8332E">فشل</span>
+    <span class="pill" style="background:#E1EBF7;color:#2E6AAE">مستلم</span>
+  </div>
+</div></section>
+
+<section id="type"><div class="wrap">
+  <p class="kicker">الخطوط</p>
+  <h2>خطّان فقط، عربي وإنجليزي بنفس الروح</h2>
+  <div class="type">
+    <div class="card"><p class="muted" style="margin:0">العناوين والأرقام الكبيرة</p><div class="spec en">Bricolage</div><p class="en muted" style="margin:0">Bricolage Grotesque · 600 / 700</p></div>
+    <div class="card"><p class="muted" style="margin:0">النصوص — عربي وإنجليزي</p><div class="spec ar">وجهة Aa</div><p class="en muted" style="margin:0">Readex Pro · 400 / 600</p></div>
+  </div>
+</div></section>
+
+<section id="voice" style="background:var(--sand)"><div class="wrap">
+  <p class="kicker">الأسلوب</p>
+  <h2>واضح، دافئ، عملي — مثل زميل سياحة خبير</h2>
+  <div class="voice">
+    <div class="card"><h3 style="margin-top:0">ابدأ بالمعلومة</h3><p>الفندق، التواريخ، والسعر أولًا.</p><div class="bubble">إعمار جراند · 4 ليالٍ · 2,652 ر.س شامل الضريبة</div></div>
+    <div class="card"><h3 style="margin-top:0">جُمل قصيرة</h3><p>بلا مبالغة ولا علامات تعجب كثيرة.</p><div class="bubble">فريقنا يتأكد من التوفر ويرسل لك رابط الدفع قريبًا.</div></div>
+    <div class="card"><h3 style="margin-top:0">لطيف في وقته</h3><p>دعابة خفيفة فقط في المحادثات الودّية.</p><div class="bubble">وحشتنا أكثر 😊 قولّي وين الوجهة الجاية؟</div></div>
+  </div>
+</div></section>
+
+<section id="contact" class="contact"><div class="wrap grid">
+  <div>
+    <p class="kicker" style="color:#5FC7BC">تواصل</p>
+    <h2>خلّينا نشغّل وجهة لشركتك</h2>
+    <p class="intro" style="color:#B7C6C2;margin-bottom:0">عرض تجريبي مباشر للمنصة ووكيل واتساب، وتجهيز حسابك بهوية شركتك وعقودك.</p>
+  </div>
+  <div class="cl">
+    <a href="https://wa.me/966544381103" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1-1 1.8.8"/></svg></span><span><small>واتساب</small><span class="en">+966 54 438 1103</span></span></a>
+    <a href="tel:+966544381103"><span class="ic"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></span><span><small>اتصال</small><span class="en">+966 54 438 1103</span></span></a>
+    <a href="mailto:raedelshonay8@gmail.com"><span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><span><small>البريد الإلكتروني</small><span class="en">raedelshonay8@gmail.com</span></span></a>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <img src="assets/brand/wejha-logo-white.svg" alt="wejha">
+  <span>© 2026 Wejha · <a href="./" style="color:#5FC7BC">الدخول للمنصة</a></span>
+</div></footer>
+</body>
+</html>
