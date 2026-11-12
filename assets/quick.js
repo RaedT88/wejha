@@ -22,7 +22,7 @@
     const g = pk.type === 'GROUP', lang = L();
     const rows = (pk.lines || []).map((l, i) => {
       const hotel = l.kind === 'hotel';
-      const val = hotel ? (l.rate ?? (l.rates && l.rates.dbl) ?? 0) : (l.unit ?? l.rate ?? 0);
+      const val = hotel ? (Number(l.rate) || (l.rates && Number(l.rates.dbl)) || 0) : (Number(l.unit) || Number(l.rate) || 0);
       return `<tr data-i="${i}">
         <td style="width:28px"><input type="checkbox" class="qf-on" data-i="${i}" checked aria-label="${t('qfRemove')}"></td>
         <td><span class="tiny muted">${t('kind_' + l.kind)}${l.optional ? ' · ' + t('qfOptional') : ''}</span>
@@ -130,7 +130,8 @@
         if (!e.on) return null;
         if (e.name) n.name = e.name;
         if (n.kind === 'hotel') {
-          n.rate = e.rate; n.rates = { sgl: e.rate, dbl: e.rate, tpl: Math.round(e.rate * 1.2), quad: Math.round(e.rate * 1.4) };
+          const was = Number(n.rates && n.rates.dbl) || Number(n.rate) || 0;
+          if (e.rate !== was) { n.rate = e.rate; n.rates = pk.type === 'GROUP' ? Object.assign({}, n.rates, { dbl: e.rate }) : { sgl: e.rate, dbl: e.rate, tpl: Math.round(e.rate * 1.2), quad: Math.round(e.rate * 1.4) }; }
           if (!n.nights || n.nights === oldN) n.nights = f.nights;
         } else if ('unit' in n || n.basis) n.unit = e.rate; else n.rate = e.rate;
         return n;
