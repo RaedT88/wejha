@@ -495,8 +495,8 @@ const ARTS = {
   }
 };
 const ART_KEYS = Object.keys(ARTS);
-function artHTML(key, cover) {
-  if (cover) return `<img src="${cover}" alt="">`;
+function artHTML(key, cover, credit) {
+  if (cover) return `<img src="${esc(cover)}" alt="" loading="lazy">${credit && credit.author ? `<a class="credit" href="${esc(credit.author_link || 'https://unsplash.com')}" target="_blank" rel="noopener">📷 ${esc(credit.author)} · Unsplash</a>` : ''}`;
   const u = 'a' + (++artN); const f = ARTS[key] || ARTS.generic;
   return `<svg viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${f(u)}</svg>`;
 }
@@ -554,7 +554,7 @@ function newLine(kind, q) {
 function quoteFromPackage(pk, o = {}) {
   const lang = o.lang || S.ui.lang;
   const q = blankQuote(pk.type, lang);
-  q.title = tx(pk.title, lang); q.dest = tx(pk.dest, lang); q.art = pk.art || 'generic'; q.cover = pk.cover || null;
+  q.title = tx(pk.title, lang); q.dest = tx(pk.dest, lang); q.art = pk.art || 'generic'; q.cover = pk.cover || null; q.coverCredit = pk.coverCredit || null;
   q.nights = pk.nights; q.pkg = pk.id; q.start = o.start || q.start;
   if (pk.type === 'GROUP') { q.group = Object.assign(clone(q.group), clone(pk.group || {})); q.group.rooming = []; }
   else { q.adults = o.adults ?? pk.adults ?? 2; q.children = o.children ?? pk.children ?? 0; }
@@ -641,7 +641,7 @@ function buildPublic(q) {
   const mult = q.markupType === 'pp' ? (p.net > 0 ? p.total / p.net : 1) : 1 + num(q.markup) / 100 * (1 + vatR);
   const r2 = v => Math.round(num(v) * mult * 100) / 100;
   return {
-    type: q.type, lang: q.lang, title: q.title, dest: q.dest, art: q.art, cover: q.cover || null,
+    type: q.type, lang: q.lang, title: q.title, dest: q.dest, art: q.art, cover: q.cover || null, coverCredit: q.coverCredit || null,
     start: q.start, nights: q.nights, validUntil: q.validUntil,
     adults: q.adults, children: q.children, infants: q.infants,
     group: { pax: q.group.pax, foc: q.group.foc, rooms: clone(q.group.rooms), rooming: [] },
@@ -979,7 +979,7 @@ function vPackages() {
   <div class="chips">${CATS.map(k => `<button class="chip ${c === k ? 'on' : ''}" data-act="pkCat" data-val="${k}">${t('cat_' + k)}</button>`).join('')}</div>
   <div class="pk-grid">${list.length ? list.map(pk => `
     <article class="pk">
-      <div class="art">${artHTML(pk.art, pk.cover)}<span class="badge">${t('nightsN', { n: pk.nights })}</span><span class="badge r">${pk.type === 'GROUP' ? t('group') : t('fit')}</span></div>
+      <div class="art">${artHTML(pk.art, pk.cover, pk.coverCredit)}<span class="badge">${t('nightsN', { n: pk.nights })}</span><span class="badge r">${pk.type === 'GROUP' ? t('group') : t('fit')}</span></div>
       <div class="body"><span class="tiny muted">${esc(tx(pk.dest, L()))}${pk.custom ? ` · <b>${t('yours')}</b>` : ''}</span><h3>${esc(pkTitle(pk))}</h3><p>${esc(tx(pk.summary, L()))}</p>
         <div class="row" style="gap:6px">${(pk.tags || []).map(x => `<span class="tag">${esc(tx(x, L()))}</span>`).join('')}</div></div>
       <div class="foot"><div class="price-from">${pk.type === 'GROUP' ? t('fromPPdbl') : t('fromPP')}<b>${money(fromPrice(pk))}</b></div>
@@ -1232,7 +1232,7 @@ document.addEventListener('change', e => {
     const kind = el.dataset.file;
     shrinkImage(file, kind === 'logo' ? 500 : 1400, kind === 'logo').then(url => {
       if (kind === 'logo') { S.brand.logo = url; renderShell(); route(); }
-      else if (kind === 'cover') { const q = curQ(); if (q) { q.cover = url; route(); } }
+      else if (kind === 'cover') { const q = curQ(); if (q) { q.cover = url; q.coverCredit = null; route(); } }
     }).catch(() => toast(t('imageTooBig')));
   }
   if (el.dataset.brand && el.tagName === 'SELECT') { S.brand[el.dataset.brand] = el.value; route(); }
@@ -1453,7 +1453,7 @@ window.BACT = {
   genRooming: () => { syncRooming(curQ()); rerender(); },
   copyRooming: () => { const q = curQ(); copyText(q.group.rooming.map((r, i) => `${i + 1}. ${t('room_' + r.type)}: ${r.names || '—'}`).join('\n')); },
   fixPax: () => { const q = curQ(); q.group.pax = price(q).roomPax; rerender(); },
-  rmCover: () => { curQ().cover = null; rerender(); },
+  rmCover: () => { curQ().cover = null; curQ().coverCredit = null; rerender(); },
   newClientHere: () => { S.ui.pickClient = true; clientDialog(); },
   savePkg: () => {
     const q = curQ();
@@ -1578,7 +1578,7 @@ function renderClient(first) {
     ${canPrint() ? `<button class="btn sm" data-act="cvPrint">${ic('download', 'sm')} ${tl('downloadPdf', L())}</button>` : ''}
     <button class="btn sm" data-act="closeCv">${ic('back', 'sm flip')} ${tl('backToOffice', L())}</button></div>`}
   <header class="cv-nav"><div class="logo">${logoHTML()}</div><div><b>${esc(name)}</b><div class="tiny muted">${esc(lang === 'ar' ? (S.brand.taglineAr || S.brand.tagline) : S.brand.tagline)}</div></div><span class="grow"></span><span class="small muted hide-sm">${esc(S.brand.phone)}</span></header>
-  <section class="hero"><div class="art">${artHTML(q.art, q.cover)}</div><div class="hc">
+  <section class="hero"><div class="art">${artHTML(q.art, q.cover, q.coverCredit)}</div><div class="hc">
     <span class="eyebrow">${c ? T('preparedFor', { n: esc(c.name) }) + ' · ' : ''}${esc(q.id === 'PREVIEW' ? T('samplePackage') : q.id)}</span>
     <h1>${esc(q.title || T('yourTrip'))}</h1>
     <div class="meta"><span>${ic('pin', 'sm')} ${esc(q.dest)}</span><span>${ic('cal', 'sm')} ${fmtShort(q.start, lang)} – ${fmtDate(endDate(q), lang)}</span><span>${ic('clock', 'sm')} ${T('nightsN', { n: q.nights })}</span><span>${ic('users', 'sm')} ${q.type === 'GROUP' ? T('paxN', { n: p.pax }) : T('travellersN', { a: q.adults, c: q.children })}</span></div></div></section>
@@ -1993,7 +1993,7 @@ function printHTML(q, lang) {
   return `<div class="pq" dir="${lang === 'ar' ? 'rtl' : 'ltr'}" lang="${lang}">
     <header class="pq-h"><div class="pq-brand"><div class="logo">${logoHTML()}</div><div><b>${esc(name)}</b><span>${esc(tag || '')}</span></div></div>
       <div class="pq-ref"><b>${T('quotationDoc')}</b><span>${esc(q.id === 'PREVIEW' ? T('samplePackage') : q.id)}</span><span>${T('issued')}: ${fmtDate(today(), lang)}</span><span>${T('validUntil')}: ${fmtDate(q.validUntil, lang)}</span></div></header>
-    <section class="pq-cover"><div class="art">${artHTML(q.art, q.cover)}</div><div class="pq-cov-t"><h1>${esc(q.title || T('yourTrip'))}</h1><span>${esc(q.dest)} · ${fmtDate(q.start, lang)} – ${fmtDate(endDate(q), lang)} · ${T('nightsN', { n: q.nights })} · ${q.type === 'GROUP' ? T('paxN', { n: p.pax }) : T('travellersN', { a: q.adults, c: q.children })}</span></div></section>
+    <section class="pq-cover"><div class="art">${artHTML(q.art, q.cover, q.coverCredit)}</div><div class="pq-cov-t"><h1>${esc(q.title || T('yourTrip'))}</h1><span>${esc(q.dest)} · ${fmtDate(q.start, lang)} – ${fmtDate(endDate(q), lang)} · ${T('nightsN', { n: q.nights })} · ${q.type === 'GROUP' ? T('paxN', { n: p.pax }) : T('travellersN', { a: q.adults, c: q.children })}</span></div></section>
     ${c ? `<p class="pq-for">${T('preparedFor', { n: esc(c.name) })}</p>` : ''}
     ${hotels.length ? `<section class="pq-b"><h2>${T('accommodation')}</h2><table><thead><tr><th>${T('kind_hotel')}</th><th>${T('city')}</th>${q.type === 'GROUP' ? '' : `<th>${T('roomType')}</th>`}<th>${T('board')}</th><th class="r">${T('nights')}</th>${q.showItemPrices ? `<th class="r">${T('total')}</th>` : ''}</tr></thead><tbody>
       ${hotels.map(l => `<tr><td><b>${esc(l.name)}</b> <span class="st">${stars(l.stars)}</span></td><td>${esc(l.city)}</td>${q.type === 'GROUP' ? '' : `<td>${esc(l.roomType)}${num(l.rooms) > 1 ? ' × ' + l.rooms : ''}</td>`}<td>${T('board_' + l.board)}</td><td class="r">${l.nights}</td>${ip(l)}</tr>`).join('')}</tbody></table></section>` : ''}

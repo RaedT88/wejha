@@ -79,6 +79,39 @@
        <button class="btn primary" data-act="qfSend" data-id="${q.id}">${ic('chat', 'sm')} ${t('sendToClient')}</button>`);
   }
 
+
+  /* ---------- real destination photos (Unsplash, via the Wejha photo service) for the ready templates ---------- */
+  const PHOTO_URL = 'https://luxecheck-ai.app.n8n.cloud/webhook/wejha-destination-photo';
+  const PHOTO_Q = { 'pk-dubai': 'Dubai skyline Burj Khalifa', 'pk-istanbul': 'Istanbul Bosphorus mosque skyline', 'pk-umrah': 'Masjid al-Haram Makkah', 'pk-maldives': 'Maldives overwater villas lagoon',
+    'pk-baku': 'Baku Flame Towers city', 'pk-georgia': 'Tbilisi Georgia old town', 'pk-alula': 'AlUla Saudi Arabia desert rock', 'pk-riyadh': 'Riyadh skyline Kingdom Centre' };
+  const PKEY = 'wj-pk-photos-v1';
+  let PHOTOS = {}; try { PHOTOS = JSON.parse(localStorage.getItem(PKEY) || '{}') || {}; } catch (e) { }
+  function applyPhotos() {
+    if (typeof PACKAGES === 'undefined') return;
+    for (const pk of PACKAGES) { const ph = PHOTOS[pk.id]; if (ph && ph.url && !pk.cover) { pk.cover = ph.url; pk.coverCredit = { author: ph.author, author_link: ph.author_link }; } }
+  }
+  let photoBusy = false;
+  async function loadPhotos() {
+    if (photoBusy || !Cloud.on || !Cloud.sb || typeof PACKAGES === 'undefined') return;
+    const todo = PACKAGES.filter(pk => PHOTO_Q[pk.id] && !(PHOTOS[pk.id] && PHOTOS[pk.id].url));
+    if (!todo.length) return;
+    photoBusy = true;
+    try {
+      const { data } = await Cloud.sb.auth.getSession(); const tok = data && data.session && data.session.access_token; if (!tok) return;
+      for (const pk of todo) {
+        try {
+          const r = await fetch(PHOTO_URL, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: JSON.stringify({ access_token: tok, query: PHOTO_Q[pk.id] }) });
+          const j = await r.json(); const ph = j && (j.photo || (j.url ? j : null));
+          if (ph && ph.url) PHOTOS[pk.id] = { url: ph.url, author: ph.author || '', author_link: ph.author_link || '' };
+        } catch (e) { }
+      }
+      try { localStorage.setItem(PKEY, JSON.stringify(PHOTOS)); } catch (e) { }
+      applyPhotos(); if (S.ui.view === 'packages') rerenderSafe();
+    } finally { photoBusy = false; }
+  }
+  applyPhotos();
+  setTimeout(loadPhotos, 2500);
+
   Object.assign(ACT, {
     qfGo: async el => {
       const pk = allPackages().find(p => p.id === el.dataset.id); if (!pk) return;
