@@ -2396,6 +2396,10 @@ async function opsDemoCall(body) {
     dp_late_k: ['Late (not accepted)', 'متأخرة (غير مستلمة)'], dp_mapTitle: ['Live request pulse', 'نبض الطلبات المباشر'], dp_mapHint: ['Orders by destination; pulsing dots are new in the last 30 minutes.', 'الطلبات حسب الوجهة؛ النقاط النابضة جديدة خلال آخر 30 دقيقة.'],
     dp_quoteMade: ['Draft quote created from the order.', 'تم إنشاء مسودة عرض سعر من الطلب.'], dp_saved: ['Saved.', 'تم الحفظ.'], dp_noStaff: ['Nobody is on duty. Turn someone on in “Team on duty”.', 'لا يوجد موظف مناوب. فعّل موظفاً من "الفريق المناوب".'],
     dp_by_auto: ['auto', 'تلقائي'], dp_by_timeout: ['not accepted in time', 'لم يُستلم في الوقت'], dp_by_manual: ['manual', 'يدوي'], dp_by_unassign: ['unassigned', 'أُلغي الإسناد'],
+    dp_teamTitle: ['Team & assignments', 'الفريق والإسناد'], dp_accepting: ['Accepting', 'يستقبل'], dp_paused: ['Paused', 'موقوف'], dp_toggleHint: ['Turn new assignments on or off', 'تشغيل أو إيقاف الطلبات الجديدة'],
+    dp_newAssign: ['New assignments', 'الطلبات الجديدة'], dp_openCol: ['Open', 'مفتوحة'], dp_acceptedCol: ['Accepted', 'مُستلمة'], dp_lateCol: ['Late', 'متأخرة'],
+    dp_viewOrders: ['Orders', 'الطلبات'], dp_unassignAll: ['Unassign all', 'إلغاء إسناد الكل'], dp_unassignAllQ: ['Unassign all {n} open orders from {s}? They go back to the unassigned list.', 'إلغاء إسناد {n} طلب مفتوح من {s}؟ ترجع لقائمة غير المُسندة.'],
+    dp_autoNow: ['Assign now', 'وزّع الآن'], dp_addStaff: ['Add staff', 'إضافة موظف'], dp_released: ['{n} orders unassigned', 'أُلغي إسناد {n} طلب'], dp_autoDone: ['{n} orders assigned', 'تم إسناد {n} طلب'],
   };
   for (const [k, [en, ar]] of Object.entries(T)) { I18N.en[k] = en; I18N.ar[k] = ar; }
 })();
@@ -2480,14 +2484,37 @@ const dspLateCount = orders => orders.filter(o => !DSP_DONE.includes(o.status) &
 const dspMine = o => { const r = DSP.rows[o.request_id]; return !!(r && r.staff_id && r.staff_id === dspMe()); };
 
 /* ---------- Duty panel ---------- */
+const dspUnassignedRecent = o => !DSP_DONE.includes(o.status) && Date.now() - (Date.parse(o.updated_at) || 0) < 3 * 86400000 && !(DSP.rows[o.request_id] && DSP.rows[o.request_id].staff_id);
 function dspDutyCard() {
   const meta = DSP.rows.__duty__; const off = (meta && meta.history && meta.history.off) || [];
-  const me = dspMe();
-  return `<div class="card" style="padding:12px 14px"><div class="row between" style="flex-wrap:wrap;gap:10px">
-    <div><b>${t('dp_dutyTitle')}</b><div class="tiny muted">${t('dp_dutyHint', { m: DSP_SLA() })}</div></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap">${DSP_STAFF().map(s => `<button class="chip ${off.includes(s.id) ? '' : 'on'}" data-act="dspDuty" data-v="${s.id}" ${can('team') ? '' : 'disabled'}>${esc(s.name)}</button>`).join('')}</div>
-    <label class="row small" style="gap:6px">${t('dp_iam')}<select class="inp" id="dsp-me" style="width:auto"><option value="">${t('dp_pickMe')}</option>${DSP_STAFF().map(s => `<option value="${s.id}" ${me === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></label>
-  </div></div>`;
+  const all = opsOrders(); const open = all.filter(o => !DSP_DONE.includes(o.status));
+  const me = dspMe(); const admin = can('team');
+  const un = open.filter(dspUnassignedRecent).length;
+  const rows = DSP_STAFF().map(s => {
+    const mine = open.filter(o => { const r = DSP.rows[o.request_id]; return r && r.staff_id === s.id; });
+    const late = mine.filter(o => dspState(o).cls === 'late').length;
+    const acc = mine.filter(o => DSP.rows[o.request_id].accepted_at).length;
+    const on = !off.includes(s.id);
+    return `<tr>
+      <td><b>${esc(s.name)}</b>${s.id === me ? ` <span class="tag">${t('you')}</span>` : ''}</td>
+      <td><button class="chip ${on ? 'on' : ''}" data-act="dspDuty" data-v="${s.id}" ${admin || s.id === me ? '' : 'disabled'} title="${t('dp_toggleHint')}">${on ? '● ' + t('dp_accepting') : '⏸ ' + t('dp_paused')}</button></td>
+      <td class="num">${mine.length}</td>
+      <td class="num">${acc}</td>
+      <td class="num" style="${late ? 'color:var(--bad);font-weight:600' : ''}">${late}</td>
+      <td style="white-space:nowrap;text-align:end">
+        <button class="btn sm ${OPS.f === 'st:' + s.id ? 'primary' : ''}" data-act="dspView" data-v="${s.id}" ${mine.length ? '' : 'disabled'}>${ic('eye', 'sm')} ${t('dp_viewOrders')}</button>
+        ${can('edit') && mine.length ? `<button class="btn sm" data-act="dspRelease" data-v="${s.id}">${ic('x', 'sm')} ${t('dp_unassignAll')}</button>` : ''}</td></tr>`;
+  }).join('');
+  return `<div class="card" style="padding:12px 14px;margin-bottom:14px">
+    <div class="row between" style="flex-wrap:wrap;gap:10px;margin-bottom:6px">
+      <div><b>${t('dp_teamTitle')}</b><div class="tiny muted">${t('dp_dutyHint', { m: DSP_SLA() })}</div></div>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+        ${un ? `<button class="btn sm ${OPS.f === 'st:none' ? 'primary' : ''}" data-act="dspView" data-v="none">${ic('alert', 'sm')} ${t('dp_unassigned')}: <b>${un}</b></button>` : ''}
+        ${can('edit') && un ? `<button class="btn sm" data-act="dspAutoNow">${ic('refresh', 'sm')} ${t('dp_autoNow')}</button>` : ''}
+        ${admin ? `<button class="btn sm ghost" data-act="dspAddStaff">${ic('plus', 'sm')} ${t('dp_addStaff')}</button>` : ''}
+      </div></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('dp_staff')}</th><th>${t('dp_newAssign')}</th><th class="num">${t('dp_openCol')}</th><th class="num">${t('dp_acceptedCol')}</th><th class="num">${t('dp_lateCol')}</th><th></th></tr></thead>
+    <tbody>${rows || `<tr><td colspan="6" class="empty">${t('dp_noStaff')}</td></tr>`}</tbody></table></div></div>`;
 }
 
 /* ---------- Live map (Leaflet loaded as window.LeafletLib) ---------- */
@@ -2622,9 +2649,11 @@ document.addEventListener('change', e => { const el = e.target; if (el && el.cla
   // filter "mine": patch the list filter by wrapping opsBody's data source temporarily
   const _body2 = opsBody;
   opsBody = function () {
-    if (OPS.f !== 'mine' || !OPS.data) return _body2();
+    if (!OPS.data || !(OPS.f === 'mine' || String(OPS.f).startsWith('st:'))) return _body2();
     const saved = OPS.data.orders; const f = OPS.f;
-    OPS.data.orders = saved.filter(dspMine); OPS.f = 'all';
+    const sid = String(f).slice(3);
+    const keep = f === 'mine' ? dspMine : sid === 'none' ? dspUnassignedRecent : (o => !DSP_DONE.includes(o.status) && DSP.rows[o.request_id] && DSP.rows[o.request_id].staff_id === sid);
+    OPS.data.orders = saved.filter(keep); OPS.f = 'all';
     try { return _body2().replace(`data-v="all" role="tab" aria-selected="true"`, `data-v="all" role="tab" aria-selected="false"`).replace(/class="chip on" data-act="opsF" data-v="all"/, 'class="chip" data-act="opsF" data-v="all"').replace(`class="chip " data-act="opsF" data-v="mine"`, `class="chip on" data-act="opsF" data-v="mine"`); }
     finally { OPS.data.orders = saved; OPS.f = f; }
   };
@@ -2638,6 +2667,26 @@ document.addEventListener('change', e => { const el = e.target; if (el && el.cla
   document.addEventListener('change', e => { if (e.target && e.target.id === 'dsp-me') { try { localStorage.setItem('wejha_me', e.target.value); } catch (x) {} opsPaint(); } });
   Object.assign(ACT, {
     dspNoop: () => { },
+    dspView: el => { const v = 'st:' + el.dataset.v; OPS.f = OPS.f === v ? 'all' : v; opsPaint(); },
+    dspRelease: el => {
+      const sid = el.dataset.v; const ids = opsOrders().filter(o => !DSP_DONE.includes(o.status) && DSP.rows[o.request_id] && DSP.rows[o.request_id].staff_id === sid).map(o => o.request_id);
+      confirmBox(t('dp_unassignAllQ', { n: ids.length, s: esc(dspStaffName(sid)) }), async () => {
+        const now = new Date().toISOString();
+        await dspSave(ids.map(id => { const r = DSP.rows[id]; return { ...r, staff_id: null, accepted_at: null, assigned_at: now, history: { ...(r.history || {}), log: ((r.history && r.history.log) || []).concat([{ s: null, at: now, by: 'unassign' }]).slice(-20) } }; }));
+        toast(t('dp_released', { n: ids.length })); opsPaint();
+      }, t('dp_unassignAll'));
+    },
+    dspAutoNow: async () => {
+      const ids = opsOrders().filter(dspUnassignedRecent).map(o => o.request_id);
+      const meta = DSP.rows.__duty__ || { request_id: '__duty__', staff_id: null, history: { off: [], rr: 0 } };
+      const now = new Date().toISOString(); const out = [];
+      for (const id of ids) { const sid = dspNext(null, meta.history.rr || 0); if (!sid) break; meta.history.rr = (meta.history.rr || 0) + 1;
+        const r = DSP.rows[id] || { request_id: id, history: {} };
+        out.push({ ...r, request_id: id, staff_id: sid, assigned_at: now, accepted_at: null, history: { ...(r.history || {}), log: ((r.history && r.history.log) || []).concat([{ s: sid, at: now, by: 'manual' }]).slice(-20) } }); }
+      if (!out.length) return toast(t('dp_noStaff'));
+      out.push(meta); await dspSave(out); toast(t('dp_autoDone', { n: out.length - 1 })); opsPaint();
+    },
+    dspAddStaff: () => { location.hash = '#team'; },
     dspAccept: async el => { const r = DSP.rows[el.dataset.id]; if (!r) return; await dspSave([{ ...r, accepted_at: new Date().toISOString() }]); toast(t('dp_saved')); opsPaintDetail(); opsPaint(); },
     dspDuty: async el => { const meta = DSP.rows.__duty__ || { request_id: '__duty__', staff_id: null, history: { off: [], rr: 0 } }; const off = new Set(meta.history.off || []); off.has(el.dataset.v) ? off.delete(el.dataset.v) : off.add(el.dataset.v); await dspSave([{ ...meta, history: { ...meta.history, off: [...off] } }]); opsPaint(); },
     dspQuote: async el => { const o = opsOrders().find(x => x.request_id === el.dataset.id); if (o) await dspToQuote(o); },

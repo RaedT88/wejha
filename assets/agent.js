@@ -149,7 +149,8 @@ return {quote,band,D,ISO};
     cst_draft: ['Draft', 'مسودة'], cst_approved: ['Approved', 'معتمد'], cst_stopped: ['Stopped', 'موقوف'], cst_archived: ['Archived', 'مؤرشف'],
     mPercent: ['% of cost', '% من التكلفة'], mFixed: ['Fixed amount per booking', 'مبلغ ثابت لكل حجز'],
     ctReview: ['Review contract', 'مراجعة العقد'], ctWarnings: ['Check before approving', 'راجع قبل الاعتماد'],
-    ctSaveDraft: ['Save as draft', 'حفظ كمسودة'], ctApprove: ['Save & approve', 'حفظ واعتماد'], ctStop: ['Stop sale', 'إيقاف البيع'], ctResume: ['Approve', 'اعتماد'],
+    ctSaveDraft: ['Save as draft', 'حفظ كمسودة'], ctSendReview: ['Send for approval', 'إرسال للاعتماد'], ctSentReview: ['Sent to the owner for approval', 'أُرسل للمالك للاعتماد'],
+    ctOwnerSets: ['Set by owner', 'يحدده المالك'], ctOwnerOnly: ['Only the owner can do this.', 'هذا الإجراء للمالك فقط.'], ctStaffNote: ['The owner sets the margin and approves before customers see the price.', 'المالك يحدد هامش الربح ويعتمد العقد قبل أن يظهر السعر للعملاء.'], ctApprove: ['Save & approve', 'حفظ واعتماد'], ctStop: ['Stop sale', 'إيقاف البيع'], ctResume: ['Approve', 'اعتماد'],
     ctTest: ['Test a price', 'جرّب تسعيرة'], ctCheckin: ['Check-in', 'الوصول'], ctCheckout: ['Check-out', 'المغادرة'], ctAdults: ['Adults', 'بالغين'], ctKids: ['Children ages (e.g. 5,9)', 'أعمار الأطفال (مثال 5,9)'],
     ctCalc: ['Calculate', 'احسب'], ctNet: ['Cost', 'التكلفة'], ctSell: ['Selling price', 'سعر البيع'],
     ctAdvanced: ['Advanced: contract data (JSON)', 'متقدم: بيانات العقد (JSON)'], ctBadJson: ['Contract data is not valid JSON', 'بيانات العقد غير صالحة'],
@@ -173,6 +174,8 @@ return {quote,band,D,ISO};
   };
   for (const k in AR) { I18N.en[k] = AR[k][0]; I18N.ar[k] = AR[k][1]; }
   ROLE_CAN.contracts = ['owner', 'agent'];
+  ROLE_CAN.ctApprove = ['owner'];
+  const OWN = () => can('ctApprove');
   ROLE_CAN.suppliers = ['owner'];
 
   window.extraNav = () => [can('contracts') ? ['contracts', 'layers', t('nav_contracts')] : null, can('suppliers') ? ['suppliers', 'link', t('nav_suppliers')] : null].filter(Boolean);
@@ -219,7 +222,7 @@ return {quote,band,D,ISO};
         <td>${esc(c.destination)}</td><td class="small">${t('kind_' + c.kind)}</td>
         <td class="small">${esc(c.valid_from || '—')} → ${esc(c.valid_to || '—')}</td>
         <td class="small ${late ? 'bad' : ''}" style="${late ? 'color:var(--bad)' : ''}">${esc(c.book_by || '—')}</td>
-        ${PM() ? '' : `<td class="small"><button class="btn ${(Number(c.margin_value) || 0) > 0 ? 'ghost' : 'primary'} sm" data-act="ctMarginDlg" data-id="${c.id}" title="${t('ctMargin')}">${ic('edit', 'sm')} ${c.margin_type === 'fixed' ? fmt(c.margin_value, c.currency) : (Number(c.margin_value) || 0) + '%'}</button>${(Number(c.margin_value) || 0) > 0 ? '' : `<div class="small" style="color:var(--bad)">${t('ctNoMargin')}</div>`}</td>`}
+        ${PM() ? '' : !OWN() ? `<td class="small">${(Number(c.margin_value) || 0) > 0 ? (c.margin_type === 'fixed' ? fmt(c.margin_value, c.currency) : Number(c.margin_value) + '%') : `<span class="muted">${t('ctOwnerSets')}</span>`}</td>` : `<td class="small"><button class="btn ${(Number(c.margin_value) || 0) > 0 ? 'ghost' : 'primary'} sm" data-act="ctMarginDlg" data-id="${c.id}" title="${t('ctMargin')}">${ic('edit', 'sm')} ${c.margin_type === 'fixed' ? fmt(c.margin_value, c.currency) : (Number(c.margin_value) || 0) + '%'}</button>${(Number(c.margin_value) || 0) > 0 ? '' : `<div class="small" style="color:var(--bad)">${t('ctNoMargin')}</div>`}</td>`}
         <td>${stPill(c.status)}</td></tr>`;
     }).join('');
     return `
@@ -357,7 +360,10 @@ return {quote,band,D,ISO};
         <div id="ts-out-box" class="small" style="margin-top:8px"></div>
       </div>
       <details style="margin-top:12px"><summary class="small muted">${t('ctAdvanced')}</summary><textarea id="cr-json" class="inp" rows="12" style="font-family:monospace;font-size:12px" dir="ltr">${esc(JSON.stringify(d, null, 2))}</textarea></details>`,
-PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="ctSave" data-st="pending">${ic('check', 'sm')} ${t('ctSubmit')}</button>` :       `<button class="btn" data-act="closeModal">${t('cancel')}</button>
+PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="ctSave" data-st="pending">${ic('check', 'sm')} ${t('ctSubmit')}</button>` :
+      !OWN() ? `<span class="small muted" style="margin-inline-end:auto">${t('ctStaffNote')}</span><button class="btn" data-act="closeModal">${t('cancel')}</button>
+       ${c.status === 'approved' ? `<button class="btn" data-act="ctSave" data-st="stopped">${t('ctStop')}</button>` : ''}
+       <button class="btn primary" data-act="ctSave" data-st="pending">${ic('check', 'sm')} ${t('ctSendReview')}</button>` :       `<button class="btn" data-act="closeModal">${t('cancel')}</button>
        ${c.id ? `<button class="btn" data-act="ctArchive">${ic('trash', 'sm')}</button>` : ''}
        <button class="btn" data-act="ctSave" data-st="${c.status === 'approved' ? 'stopped' : 'draft'}">${c.status === 'approved' ? t('ctStop') : t('ctSaveDraft')}</button>
        <button class="btn primary" data-act="ctSave" data-st="approved">${ic('check', 'sm')} ${t('ctApprove')}</button>`, { wide: true });
@@ -387,6 +393,7 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
     ctSaveStops: async () => { try { await Cloud.rpc('partner_set_stop_sales', { p_id: CTD.id, p_stop_sales: readStops() }); toast(t('saved')); closeModal(); CT = null; loadContracts(); } catch (e) { toast(friendlyErr(e)); } },
     ctTaxAdd: () => { const box = $('#cr-taxes'); if (box) box.insertAdjacentHTML('beforeend', taxRow({ name: '', pct: '' })); },
     ctMarginDlg: el => {
+      if (!OWN()) return toast(t('ctOwnerOnly'));
       const c = (CT || []).find(x => x.id === el.dataset.id); if (!c) return;
       modal(t('ctMargin') + ' · ' + c.title, `<p class="small muted">${t('ctMarginHint')}</p>
         <div class="row" style="gap:6px"><select id="qm-t"><option value="percent" ${c.margin_type !== 'fixed' ? 'selected' : ''}>${t('mPercent')}</option><option value="fixed" ${c.margin_type === 'fixed' ? 'selected' : ''}>${t('mFixed')} (${esc(c.currency || '')})</option></select>
@@ -427,13 +434,14 @@ PM() ? `<button class="btn" data-act="closeModal">${t('cancel')}</button><button
         catch (e) { toast(friendlyErr(e)); return; }
         closeModal(); toast(t('ctSubmitted')); CT = null; loadContracts(); return;
       }
-      c.status = el.dataset.st;
+      c.status = !OWN() && el.dataset.st !== 'stopped' ? 'pending' : el.dataset.st;
       const row = { agency_id: Cloud.agencyId, status: c.status, kind: c.kind, destination: c.destination, title: c.title, valid_from: c.valid_from, valid_to: c.valid_to, book_by: c.book_by,
         currency: c.currency, margin_type: c.margin_type, margin_value: c.margin_value, data: c.data, source_file: c.source_file || null, updated_at: new Date().toISOString() };
+      if (!OWN()) { delete row.margin_type; delete row.margin_value; }
       const q = c.id ? Cloud.sb.from('package_contracts').update(row).eq('id', c.id) : Cloud.sb.from('package_contracts').insert(row);
       const { error } = await q;
-      if (error) { toast(friendlyErr(error)); return; }
-      closeModal(); toast(t('saved')); CT = null; loadContracts();
+      if (error) { toast(/owner_only/.test(error.message || '') ? t('ctOwnerOnly') : friendlyErr(error)); return; }
+      closeModal(); toast(!OWN() && c.status === 'pending' ? t('ctSentReview') : t('saved')); CT = null; loadContracts();
     },
     ctArchive: () => confirmBox(t('ctDelQ'), async () => { const { error } = await Cloud.sb.from('package_contracts').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('id', CTD.id); if (error) toast(friendlyErr(error)); else { toast(t('deleted')); CT = null; loadContracts(); } }, t('delete'))
   });
