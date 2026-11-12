@@ -2419,7 +2419,7 @@ async function dspTeam() {
   if (Cloud.on && Cloud.sb && Cloud.agencyId && !DSP.team) {
     try { const { data } = await Cloud.sb.from('agency_members').select('user_id, name, email, role').eq('agency_id', Cloud.agencyId).order('created_at');
       DSP.team = (data || []).filter(m => m.role !== 'viewer').map(m => ({ id: m.user_id, name: m.name || String(m.email || '').split('@')[0] || '—' })); } catch (e) { DSP.team = []; }
-    if (Cloud.user && (!dspMe() || /^s\d$/.test(dspMe()))) { try { localStorage.setItem('wejha_me', Cloud.user.id); } catch (e) { } }
+    if (Cloud.user && dspMe() !== Cloud.user.id) { try { localStorage.setItem('wejha_me', Cloud.user.id); } catch (e) { } }
   }
 }
 async function dspLoad() {
