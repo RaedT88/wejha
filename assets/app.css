@@ -521,3 +521,13 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
 .wj-contact{gap:6px;text-decoration:none}
 .wj-contact img{display:block;width:20px;height:20px}
+/* top-bar availability switch */
+.wj-duty{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px 0 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font:600 13px/1 inherit;color:var(--ink);cursor:pointer;white-space:nowrap}
+.wj-duty .sw{width:30px;height:18px;border-radius:999px;background:#CBD5E1;position:relative;transition:background .15s}
+.wj-duty .sw i{position:absolute;top:2px;inset-inline-start:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgb(0 0 0/.25);transition:inset-inline-start .15s}
+.wj-duty.on{border-color:color-mix(in oklab,var(--good) 45%,var(--line));background:color-mix(in oklab,var(--good) 9%,var(--surface));color:var(--good)}
+.wj-duty.on .sw{background:var(--good)}.wj-duty.on .sw i{inset-inline-start:14px}
+.wj-duty.off{color:var(--muted)}
+.wj-wait{height:30px;padding:0 10px;border-radius:999px;border:0;background:#C2560C;color:#fff;font:600 12px/1 inherit;cursor:pointer}
+@media (max-width:720px){.wj-duty .lbl{display:none}.wj-duty{padding:0 8px}}
+.toast{z-index:1300}
