@@ -108,7 +108,7 @@
     return topList(Object.values(m).sort((a, b) => b[1] - a[1]).slice(0, 6));
   }
   function topHotels(l) {
-    const m = {}; for (const o of l) { const h = String(o.hotel || '').trim(); if (!h) continue; const k = h.toLowerCase(); const e = m[k] = m[k] || [h, 0, 0]; e[1]++; if (BOOKED.includes(o.status)) e[2]++; }
+    const m = {}; for (const o of l) { let h = String(o.hotel || '').trim(); if (!h) { const m = reqText(o.request_text).match(/(?:اسم الفندق\s*:?\s*|^)([^\n]*(?:hotel|inn|resort|suites|فندق)[^\n]*)/im); h = m ? m[1].replace(/^\*?\s*/, '').replace(/^فندق\s+/, '').slice(0, 48).trim() : ''; } if (!h) continue; const k = h.toLowerCase(); const e = m[k] = m[k] || [h, 0, 0]; e[1]++; if (BOOKED.includes(o.status)) e[2]++; }
     return topList(Object.values(m).sort((a, b) => b[1] - a[1]).slice(0, 6));
   }
   function team(all) {
@@ -194,7 +194,7 @@
       LL.marker(g.c, { icon, riseOnHover: true }).bindPopup(pop, { maxWidth: 320, className: 'cc-popup' }).bindTooltip(`${esc(dspCityName(g.k))} · ${n}`, { direction: 'top', offset: [0, -r] }).addTo(LV.layer);
       pts.push(g.c);
     }
-    if (pts.length && !LV.fitted) { LV.map.fitBounds(LL.latLngBounds(pts).pad(.35), { maxZoom: 5 }); LV.fitted = true; }
+    if (!LV.fitted) { if (pts.length > 1) LV.map.fitBounds(LL.latLngBounds(pts).pad(.35), { maxZoom: 4 }); else LV.map.setView(pts[0] ? [(pts[0][0] + 25) / 2, (pts[0][1] + 45) / 2] : [25, 45], 3); LV.fitted = true; }
     setTimeout(() => LV.map && LV.map.invalidateSize(), 60);
   }
   function paint() { const b = document.getElementById('lv-body'); if (!b) return; b.innerHTML = body(); setTimeout(draw, 0); }
