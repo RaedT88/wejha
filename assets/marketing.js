@@ -136,6 +136,7 @@
             <span class="small" id="mk-fname">${ED.media_kind ? mediaIc(ED.media_kind) + ' ' + esc(ED.media_name || '') : ''}</span>
             ${ED.media_kind ? `<button class="btn" data-act="mkNoMedia">${ic('x', 'sm')} ${t('mkRemoveMedia')}</button>` : ''}</div>
             <div class="tiny muted">${t('mkMediaHint')}</div></div>
+          <div class="f"><label for="mk-image-url">${L()==='ar'?'صورة من Unsplash':'Photo from Unsplash'}</label><div class="row" style="gap:8px"><input class="inp" id="mk-image-url" type="url" placeholder="https://images.unsplash.com/photo-…" style="min-width:0;flex:1"><button class="btn" data-act="mkImportUnsplash">${L()==='ar'?'إضافة الصورة':'Add photo'}</button></div><div class="tiny muted">${L()==='ar'?'رابط الصورة المباشر. تُحفظ نسخة داخل العرض بعد الاستيراد.':'Use a direct image URL. A copy is saved inside the offer after import.'}</div></div>
           ${!owner ? `<p class="tiny muted">${t('mkOwnerOnly')}</p>` : ''}
         </div>
         <div><div class="tiny muted" style="margin-bottom:6px">${t('mkPreview')}</div><div id="mk-prev">${waPreview(ED)}</div>
@@ -164,6 +165,36 @@
     if (error) throw error; MEDIA[id] = data.media_b64 || ''; return MEDIA[id];
   }
   function b64(file) { return new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = no; r.readAsDataURL(file); }); }
+
+  let importingPhoto = false;
+  async function importUnsplash(button) {
+    if (importingPhoto || !ED) return;
+    let url;
+    try {
+      url = new URL(String(($('#mk-image-url') || {}).value || '').trim());
+      if (url.protocol !== 'https:' || url.hostname !== 'images.unsplash.com' || url.username || url.password) throw Error('invalid_url');
+    } catch (_) { return toast(L() === 'ar' ? 'ضع رابط الصورة المباشر من images.unsplash.com.' : 'Use a direct image URL from images.unsplash.com.'); }
+    const target = ED;
+    importingPhoto = true; button.disabled = true;
+    const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 20000);
+    try {
+      url.searchParams.set('w', '1600'); url.searchParams.set('q', '80'); url.searchParams.set('fit', 'max'); url.searchParams.set('fm', 'jpg');
+      const response = await fetch(url.toString(), { signal: controller.signal, redirect: 'error', credentials: 'omit' });
+      if (!response.ok) throw Error('image_download_failed');
+      const file = await response.blob();
+      if (!['image/jpeg', 'image/png'].includes(file.type)) throw Error('image_type');
+      if (file.size > MAXB || !file.size) throw Error('image_size');
+      const encoded = await b64(file);
+      if (ED !== target || !$('#mk-image-url')) return;
+      MEDIA[ED.id || 'new'] = encoded;
+      const filename = 'Unsplash-' + url.pathname.split('/').pop().slice(0, 80) + '.jpg';
+      Object.assign(ED, { media_kind: 'image', media_mime: file.type, media_name: filename, _mediaChanged: true });
+      const name = $('#mk-fname'); if (name) name.textContent = '🖼️ ' + filename;
+      paintPrev();
+    } catch (_) { toast(L() === 'ar' ? 'تعذّر استيراد الصورة. استخدم صورة Unsplash مجانية بصيغة JPG أو PNG وأقل من 4 ميجا.' : 'Could not import the photo. Use a free Unsplash JPG or PNG under 4 MB.'); }
+    finally { clearTimeout(timer); importingPhoto = false; button.disabled = false; }
+  }
+
 
   async function save(status) {
     readForm();
@@ -260,6 +291,7 @@
     mkNew: () => { MEDIA.new = ''; form({}); },
     mkOpen: el => { const o = (MO || []).find(x => x.id === el.dataset.id); if (o) form(o); },
     mkF: el => { MF = el.dataset.val; rerenderSafe(); },
+    mkImportUnsplash: importUnsplash,
     mkSave: el => save(el.dataset.val || ''),
     mkNoMedia: () => { MEDIA[ED.id || 'new'] = ''; Object.assign(ED, { media_kind: null, media_mime: null, media_name: null, _mediaChanged: true }); const f = $('#mk-fname'); if (f) f.textContent = ''; paintPrev(); },
     mkSetStatus: async el => { const { error } = await Cloud.sb.from(T).update({ status: el.dataset.val }).eq('id', ED.id); if (error) return toast(friendlyErr(error)); closeModal(); MO = null; load(); },
