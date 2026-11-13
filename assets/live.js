@@ -9,7 +9,7 @@
     k_vs: ['vs previous period', 'مقارنة بالفترة السابقة'], k_new: ['new', 'جديد'],
     lv_live: ['Live', 'مباشر'], lv_last30: ['{n} in the last 30 min', '{n} خلال آخر 30 دقيقة'], lv_upd: ['updated {t}', 'آخر تحديث {t}'],
     f_all: ['All', 'الكل'], f_staff: ['Needs staff', 'يحتاج موظف'], f_active: ['In progress', 'قيد المعالجة'], f_booked: ['Booked', 'محجوز'],
-    m_dark: ['Night', 'ليلي'], m_sat: ['Satellite', 'قمر صناعي'], m_routes: ['Customer routes', 'مسارات العملاء'],
+    m_dark: ['Map', 'خريطة'], m_sat: ['Satellite', 'قمر صناعي'], m_routes: ['Customer routes', 'مسارات العملاء'],
     leg_new: ['New (30 min)', 'جديد (30 دقيقة)'], leg_staff: ['Needs staff', 'يحتاج موظف'], leg_active: ['In progress', 'قيد المعالجة'], leg_booked: ['Booked', 'محجوز'], leg_fail: ['Failed', 'فشل'],
     q_title: ['Action queue', 'قائمة المهام'], q_sub: ['Orders waiting for a person', 'طلبات تنتظر تدخّل موظف'], q_staff: ['Needs staff', 'يحتاج موظف'], q_fail: ['Search failed', 'بحث فشل'], q_pay: ['Awaiting payment', 'بانتظار الدفع'], q_late: ['Not accepted on time', 'لم تُستلم في الوقت'],
     q_empty: ['Nothing waiting. The agent is handling everything.', 'لا شيء ينتظر. الوكيل يتولى كل الطلبات.'], q_more: ['+{n} more', '+{n} أخرى'],
@@ -24,7 +24,7 @@
   for (const k in AR) { I18N.en[k] = AR[k][0]; I18N.ar[k] = AR[k][1]; }
   if (!ROUTES.includes('reports')) ROUTES.push('reports');
 
-  const LV = { map: null, layer: null, timer: null, range: 'today', f: 'all', style: 'dark', routes: true, fitted: false, base: null };
+  const LV = { map: null, layer: null, timer: null, range: 'today', f: 'all', style: 'light', routes: false, fitted: false, base: null };
   const BOOKED = ['paid', 'vouchered'], QUOTED = ['quoted', 'replied', 'payment_pending', 'hold', 'paid', 'vouchered'];
   const STAFF = ['human_review'], FAIL = ['failed'];
   const COL = { fresh: '#E8B04B', staff: '#E07B2A', fail: '#D9453D', active: '#2FB3A8', booked: '#3CB46E' };
@@ -138,13 +138,15 @@
     const cur = all.filter(o => inRange(o, W.a, W.b)), prev = all.filter(o => inRange(o, W.pa, W.pb));
     const fresh = all.filter(isNew).length;
     return `${kpis(cur, prev, W)}
+    <div data-wj-dispatch-slot>${typeof window.wjDispatchPanel === 'function' ? window.wjDispatchPanel() : ''}</div>
     <div class="cc-hero">
-      <div class="cc-mapcard"><div id="lv-map"></div>
-        <div class="cc-ov cc-ov-tl"><span class="cc-live"><i></i>${t('lv_live')}</span><span>${t('lv_last30', { n: fresh })}</span><span class="muted-l">${t('lv_upd', { t: OPS.at ? new Date(OPS.at).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' }) : '—' })}</span></div>
-        <div class="cc-ov cc-ov-tr">${['all', 'staff', 'active', 'booked'].map(f => `<button class="${LV.f === f ? 'on' : ''}" data-act="lvF" data-v="${f}">${t('f_' + f)}</button>`).join('')}</div>
-        <div class="cc-ov cc-ov-br"><button class="${LV.style === 'dark' ? 'on' : ''}" data-act="lvStyle" data-v="dark">${t('m_dark')}</button><button class="${LV.style === 'sat' ? 'on' : ''}" data-act="lvStyle" data-v="sat">${t('m_sat')}</button><button class="${LV.routes ? 'on' : ''}" data-act="lvRoutes">${t('m_routes')}</button></div>
-        <div class="cc-ov cc-ov-bl">${[['fresh', 'leg_new'], ['staff', 'leg_staff'], ['fail', 'leg_fail'], ['active', 'leg_active'], ['booked', 'leg_booked']].map(([c, l]) => `<span><i style="background:${COL[c]}"></i>${t(l)}</span>`).join('')}</div>
-      </div>
+      <section class="cc-mapcard" aria-label="${L() === 'ar' ? 'وجهات الطلبات' : 'Request destinations'}">
+        <div class="cc-map-heading"><div><b>${L() === 'ar' ? 'وجهات الطلبات' : 'Request destinations'}</b><p>${L() === 'ar' ? 'حسب وجهة الحجز · المواقع تقريبية على مستوى المدينة' : 'By booking destination · approximate city locations'}</p></div><span class="cc-live"><i></i>${t('lv_live')}</span></div>
+        <div class="cc-map-tools">${['all', 'staff', 'active', 'booked'].map(f => `<button class="${LV.f === f ? 'on' : ''}" data-act="lvF" data-v="${f}" aria-pressed="${LV.f === f}">${t('f_' + f)}</button>`).join('')}<span class="tiny muted">${t('lv_upd', { t: OPS.at ? new Date(OPS.at).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' }) : '—' })}</span></div>
+        <div class="cc-map-stage"><div id="lv-map"></div></div>
+        <div class="cc-map-footer">${[['staff','leg_staff'],['active','leg_active'],['booked','leg_booked']].map(([c,l])=>`<span><i style="background:${COL[c]}"></i>${t(l)}</span>`).join('')}</div>
+        <div id="lv-destinations" class="cc-destinations"></div>
+      </section>
       ${queue(all)}
     </div>
     <div class="cc-row2">
@@ -166,15 +168,13 @@
   function arc(a, b) { const [la1, lo1] = a, [la2, lo2] = b; const mx = (la1 + la2) / 2, my = (lo1 + lo2) / 2; const dx = la2 - la1, dy = lo2 - lo1; const k = .22; const cx = mx - dy * k, cy = my + dx * k; const pts = []; for (let i = 0; i <= 24; i++) { const t2 = i / 24, u = 1 - t2; pts.push([u * u * la1 + 2 * u * t2 * cx + t2 * t2 * la2, u * u * lo1 + 2 * u * t2 * cy + t2 * t2 * lo2]); } return pts; }
   function setBase() {
     const LL = window.LeafletLib; if (!LV.map) return; if (LV.base) LV.base.forEach(l => LV.map.removeLayer(l));
-    LV.base = LV.style === 'sat'
-      ? [LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Imagery © Esri' }), LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, opacity: .8 })]
-      : [LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Tiles © Esri' }), LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, opacity: .9 })];
+    LV.base = [LL.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap contributors' })];
     LV.base.forEach(l => l.addTo(LV.map).bringToBack());
   }
   function draw() {
     const el = document.getElementById('lv-map'); const LL = window.LeafletLib; if (!el || !LL) return;
     if (!LV.map || LV.map.getContainer() !== el) {
-      LV.map = LL.map(el, { zoomControl: false, attributionControl: true, worldCopyJump: true, scrollWheelZoom: true, minZoom: 2 }).setView([25, 45], 3);
+      LV.map = LL.map(el, { zoomControl: false, attributionControl: true, worldCopyJump: true, scrollWheelZoom: false, minZoom: 2 }).setView([25, 45], 3);
       LL.control.zoom({ position: L() === 'ar' ? 'topleft' : 'topright' }).addTo(LV.map);
       LV.base = null; setBase(); LV.layer = LL.layerGroup().addTo(LV.map); LV.fitted = false;
     }
@@ -189,15 +189,21 @@
       const n = g.list.length, fresh = g.list.some(isNew), staff = g.list.some(o => STAFF.includes(o.status)), fail = g.list.some(o => FAIL.includes(o.status)), booked = g.list.filter(o => BOOKED.includes(o.status)).length;
       const col = staff ? COL.staff : fail ? COL.fail : fresh ? COL.fresh : booked === n ? COL.booked : COL.active;
       const r = Math.min(34, 12 + Math.sqrt(n) * 5);
-      const icon = LL.divIcon({ className: '', html: `<div class="cc-pin ${fresh ? 'fresh' : ''}" style="--c:${col};width:${r * 2}px;height:${r * 2}px"><span>${n}</span></div>`, iconSize: [r * 2, r * 2], iconAnchor: [r, r] });
+      const icon = LL.divIcon({ className: '', html: `<div class="cc-pin ${fresh ? 'fresh' : ''}" style="--c:${col};width:${r * 2}px;height:${r * 2}px"><span>${n}</span><em>${esc(dspCityName(g.k))}</em></div>`, iconSize: [r * 2, r * 2], iconAnchor: [r, r] });
       const pop = `<div class="cc-pop"><b>${esc(dspCityName(g.k))}</b><div class="cc-popk"><span>${n} ${t('lv_req')}</span><span>${booked} ${t('lv_bk')}</span></div>${g.list.slice(0, 6).map(o => `<a role="button" tabindex="0" style="cursor:pointer" data-act="lvOpen" data-v="${esc(o.request_id || '')}"><span>${esc(o.hotel || reqText(o.request_text).split('\n')[0].slice(0, 38))}</span> ${opsPill(o.status)}</a>`).join('')}</div>`;
       LL.marker(g.c, { icon, riseOnHover: true }).bindPopup(pop, { maxWidth: 320, className: 'cc-popup' }).bindTooltip(`${esc(dspCityName(g.k))} · ${n}`, { direction: 'top', offset: [0, -r] }).addTo(LV.layer);
       pts.push(g.c);
     }
+    const destinations = document.getElementById('lv-destinations');
+    if(destinations) {
+      const grouped=Object.values(groups).sort((a,b)=>b.list.length-a.list.length);
+      const missing=list.length-grouped.reduce((n,g)=>n+g.list.length,0);
+      destinations.innerHTML=grouped.map(g=>`<button data-act="lvDestination" data-v="${esc(g.k)}"><b>${esc(dspCityName(g.k))}</b><span>${g.list.length} ${t('lv_req')}</span></button>`).join('')+(missing?`<span class="tiny muted">${missing} ${L()==='ar'?'طلبات دون وجهة محددة':'requests without a known destination'}</span>`:'')+(!list.length?`<span class="tiny muted">${t('lv_none')}</span>`:'');
+    }
     if (!LV.fitted) { if (pts.length > 1) LV.map.fitBounds(LL.latLngBounds(pts).pad(.35), { maxZoom: 4 }); else LV.map.setView(pts[0] ? [(pts[0][0] + 25) / 2, (pts[0][1] + 45) / 2] : [25, 45], 3); LV.fitted = true; }
     setTimeout(() => LV.map && LV.map.invalidateSize(), 60);
   }
-  function paint() { const b = document.getElementById('lv-body'); if (!b) return; b.innerHTML = body(); setTimeout(draw, 0); }
+  function paint() { const b = document.getElementById('lv-body'); if (!b) return; const keep=b.querySelector('#lv-map'); if(keep)keep.remove(); b.innerHTML = body(); if(keep && b.querySelector('#lv-map'))b.querySelector('#lv-map').replaceWith(keep); setTimeout(draw, 0); }
 
   /* ---------- Tooltip for charts ---------- */
   let tip = null;
@@ -236,7 +242,8 @@
     lvRange: el => { LV.range = el.dataset.v; LV.fitted = false; document.querySelectorAll('.cc-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === LV.range)); paint(); },
     lvF: el => { LV.f = el.dataset.v; LV.fitted = false; paint(); },
     lvStyle: el => { LV.style = el.dataset.v; setBase(); document.querySelectorAll('.cc-ov-br [data-act=lvStyle]').forEach(b => b.classList.toggle('on', b.dataset.v === LV.style)); },
-    lvRoutes: () => { LV.routes = !LV.routes; paint(); }
+    lvRoutes: () => { LV.routes = false; paint(); },
+    lvDestination: el => { const c=DSP_CITIES[el.dataset.v];if(c&&LV.map)LV.map.setView(c,7); }
   });
 
   const css = document.createElement('style');
@@ -313,6 +320,15 @@
   @media (max-width:1280px){.cc-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.cc-row4{grid-template-columns:repeat(2,minmax(0,1fr))}}
   @media (max-width:1000px){.cc-hero,.cc-row2{grid-template-columns:1fr}.cc-mapcard{min-height:420px}.cc-queue{max-height:none}.cc-latest{grid-template-columns:1fr}}
   @media (max-width:640px){.cc-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cc-row4{grid-template-columns:1fr}.cc-ov-tr{top:auto;bottom:70px;inset-inline-end:12px}}`;
+  css.textContent += `
+  .cc-mapcard{border:1px solid var(--line);background:var(--surface);box-shadow:none;min-height:0;border-radius:16px;display:flex;flex-direction:column}
+  .cc-map-heading{padding:16px 18px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}.cc-map-heading b{font-size:15px}.cc-map-heading p{font-size:12px;color:var(--muted);margin:5px 0}.cc-map-heading .cc-live{font-size:11px;color:#19745e;background:#edf8f3;padding:5px 8px;border-radius:7px}
+  .cc-map-tools{display:flex;gap:5px;padding:0 16px 12px;align-items:center;flex-wrap:wrap}.cc-map-tools button{border:1px solid transparent;border-radius:8px;background:transparent;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--muted)}.cc-map-tools button.on{background:var(--brand-soft,#ede9f5);color:var(--ink);font-weight:600}.cc-map-tools button:focus-visible{outline:2px solid var(--brand)}.cc-map-tools>span{margin-inline-start:auto;font-size:11px}
+  .cc-map-stage{height:330px;position:relative;background:#eef2f1;border-block:1px solid var(--line)}#lv-map{background:#eef2f1}.cc-map-footer{display:flex;gap:16px;padding:12px 18px 4px;font-size:11px;color:var(--muted);flex-wrap:wrap}.cc-map-footer>span{display:flex;align-items:center;gap:6px}.cc-map-footer i{width:7px;height:7px;border-radius:50%}
+  .cc-destinations{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 16px;align-items:center}.cc-destinations button{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:7px 10px;background:var(--surface);color:var(--ink);font:inherit;font-size:11px;cursor:pointer}.cc-destinations button span{color:var(--muted)}.cc-destinations button:hover{border-color:var(--brand)}
+  .cc-pin{background:var(--c);border:3px solid white;box-shadow:0 2px 9px #162d3638;text-shadow:none}.cc-pin em{position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);font:600 11px/1.2 system-ui,sans-serif;font-style:normal;background:#ffffffeb;color:#243b47;border:1px solid #dce3e6;padding:4px 7px;border-radius:6px;white-space:nowrap;text-shadow:none;box-shadow:0 1px 4px #0001}.cc-pin.fresh::before,.cc-pin.fresh::after{animation:none;display:none}.cc-queue{max-height:540px}
+  @media(max-width:640px){.cc-map-stage{height:280px}.cc-map-tools>span{margin-inline-start:0;width:100%}}
+  `;
   document.head.appendChild(css);
   try { if (Cloud.on && document.querySelector('#side')) { renderShell(); route(); } } catch (e) { }
 })();
