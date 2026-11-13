@@ -3,14 +3,14 @@
   if (typeof ROUTES === 'undefined') return;
   const AR = {
     nav_preferred: ['Preferred hotels', 'الفنادق المفضلة'],
-    phSub: ['Rank your hotels in each city from 1 (first) to 10. When a customer asks for a city, the WhatsApp agent shows these hotels first.', 'رتّب فنادقك في كل مدينة من 1 (الأول) إلى 10. لما العميل يطلب مدينة، الوكيل في واتساب يعرض هذه الفنادق أولاً.'],
+    phSub: ['6 active hotels per city: 2 four-star and 4 five-star, ranked 1–6. Upload your CSV to replace the selected cities.', '6 فنادق مفعّلة لكل مدينة: 2 أربع نجوم و4 خمس نجوم، بترتيب 1–6. ارفع ملف CSV لاستبدال اختيارات المدن الموجودة فيه.'],
     phAdd: ['Add hotel', 'إضافة فندق'], phEdit: ['Edit hotel', 'تعديل فندق'], phImport: ['Import CSV', 'استيراد CSV'], phExport: ['Export', 'تصدير'],
     phTemplate: ['CSV template', 'نموذج CSV'], phCountry: ['Country', 'الدولة'], phCity: ['City', 'المدينة'], phHotel: ['Hotel', 'الفندق'],
     phPriority: ['Priority', 'الأولوية'], phStars: ['Stars', 'النجوم'], phNotes: ['Notes (internal)', 'ملاحظات (داخلية)'], phActive: ['Active', 'مفعّل'],
-    phEmpty: ['No preferred hotels yet. Add one, or import a CSV from Excel with the columns country, city, hotel, priority.', 'لا توجد فنادق مفضلة بعد. أضف فندقاً، أو استورد ملف CSV من Excel بالأعمدة: country, city, hotel, priority.'],
+    phEmpty: ['No preferred hotels yet. Add one, or import a CSV from Excel with the columns country, city, hotel, priority, stars.', 'لا توجد فنادق مفضلة بعد. أضف فندقاً، أو استورد ملف CSV من Excel بالأعمدة: country, city, hotel, priority, stars.'],
     phNeed: ['City and hotel are required.', 'المدينة واسم الفندق مطلوبان.'], phSaved: ['Hotel saved', 'تم حفظ الفندق'], phDelQ: ['Remove this hotel from the list?', 'حذف هذا الفندق من القائمة؟'],
     phAll: ['All cities', 'كل المدن'], phSearch: ['Search hotel or city', 'ابحث عن فندق أو مدينة'], phOff: ['Off', 'موقوف'],
-    phImported: ['{a} added · {u} updated · {s} skipped', '{a} أُضيف · {u} حُدّث · {s} تُخطّي'], phImportErr: ['Could not read the file. Save it from Excel as "CSV UTF-8" with the columns country, city, hotel, priority.', 'تعذّرت قراءة الملف. احفظه من Excel بصيغة "CSV UTF-8" بالأعمدة country, city, hotel, priority.'],
+    phImported: ['{a} added · {u} updated · {s} skipped', '{a} أُضيف · {u} حُدّث · {s} تُخطّي'], phImportErr: ['Could not read the file. Save it from Excel as "CSV UTF-8" with the columns country, city, hotel, priority, stars.', 'تعذّرت قراءة الملف. احفظه من Excel بصيغة "CSV UTF-8" بالأعمدة country, city, hotel, priority, stars.'],
     phTooMany: ['Up to 2,000 rows per file.', 'الحد 2,000 صف في الملف.'], phNoTable: ['The preferred hotels table is not set up yet. Run the migration 20261112_preferred_hotels.sql in Supabase.', 'جدول الفنادق المفضلة غير مُعدّ بعد. شغّل ملف 20261112_preferred_hotels.sql في Supabase.'],
     phCount: ['{n} hotels in {c} cities', '{n} فندق في {c} مدينة'], phUp: ['Move up', 'لأعلى'], phDown: ['Move down', 'لأسفل']
   };
@@ -18,7 +18,7 @@
   if (!ROUTES.includes('preferred')) ROUTES.push('preferred');
   ROLE_CAN.preferred = ['owner', 'agent'];
 
-  let PH = null, PHF = 'all', PHQ = '', PHE = null, PHERR = null;
+  let PH = null, PHF = 'all', PHQ = '', PHE = null, PHERR = null, PHIMPORT = null, PHBUSY = false, PHARCH = false;
   const T = 'preferred_hotels';
   const key = s => String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   const nInt = (v, lo, hi) => { const n = parseInt(String(v || '').replace(/[^\d]/g, ''), 10); return isNaN(n) ? null : Math.min(hi, Math.max(lo, n)); };
@@ -38,11 +38,12 @@
     const edit = can('preferred');
     const cities = [...new Set(PH.map(h => h.city))].sort((a, b) => a.localeCompare(b));
     const q = key(PHQ);
-    const list = PH.filter(h => (PHF === 'all' || h.city === PHF) && (!q || key(h.hotel + ' ' + h.city + ' ' + (h.country || '')).includes(q)));
+    const list = PH.filter(h => (PHARCH || h.active !== false) && (PHF === 'all' || h.city === PHF) && (!q || key(h.hotel + ' ' + h.city + ' ' + (h.country || '')).includes(q)));
     const groups = {}; for (const h of list) (groups[h.city] = groups[h.city] || []).push(h);
     const btns = `<div class="row" style="gap:8px;flex-wrap:wrap">
       <button class="btn" data-act="phTemplate">${ic('download', 'sm')} ${t('phTemplate')}</button>
       ${PH.length ? `<button class="btn" data-act="phExport">${ic('download', 'sm')} ${t('phExport')}</button>` : ''}
+      <button class="btn ${PHARCH ? 'primary' : ''}" data-act="phArchived">${L() === 'ar' ? (PHARCH ? 'إخفاء الموقوفة' : 'عرض الموقوفة') : (PHARCH ? 'Hide archived' : 'Show archived')}</button>
       ${edit ? `<label class="btn" style="cursor:pointer">${ic('upload', 'sm')} ${t('phImport')}<input type="file" id="ph-file" accept=".csv,text/csv" style="display:none"></label>
       <button class="btn primary" data-act="phNew">${ic('plus', 'sm')} ${t('phAdd')}</button>` : ''}</div>`;
     return head(btns) + `
@@ -53,7 +54,9 @@
       ${cities.length > 1 ? `<div class="chips" style="margin-bottom:12px">${['all', ...cities].map(c => `<button class="chip ${PHF === c ? 'on' : ''}" data-act="phCity" data-val="${esc(c)}">${c === 'all' ? t('phAll') : esc(c)} <span class="n">${c === 'all' ? PH.length : PH.filter(h => h.city === c).length}</span></button>`).join('')}</div>` : ''}` : ''}
     ${!PH.length ? `<div class="card"><p class="muted">${t('phEmpty')}</p></div>` : Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(city => {
       const rows = groups[city];
-      return `<div class="card" style="padding:4px 6px;margin-bottom:12px"><div style="padding:10px 10px 4px"><b>${esc(city)}</b> <span class="small muted">${esc(rows[0].country || '')}</span></div>
+      const active = PH.filter(h => h.city === city && h.active !== false), n4 = active.filter(h => h.stars === 4).length, n5 = active.filter(h => h.stars === 5).length;
+      const valid = active.length === 6 && n4 === 2 && n5 === 4;
+      return `<div class="card" style="padding:4px 6px;margin-bottom:12px"><div style="padding:10px 10px 4px"><b>${esc(city)}</b> <span class="small muted">${esc(rows[0].country || '')}</span> <span class="pill ${valid ? 'st-confirmed' : 'st-draft'}">${active.length}/6 · 4★ ${n4}/2 · 5★ ${n5}/4</span></div>
       <div class="tbl-wrap"><table class="tbl"><thead><tr><th style="width:70px">${t('phPriority')}</th><th>${t('phHotel')}</th><th>${t('phStars')}</th><th>${t('phNotes')}</th>${edit ? '<th></th>' : ''}</tr></thead><tbody>
       ${rows.map((h, i) => `<tr class="${h.active ? '' : 'muted'}">
         <td><span class="pill ${h.priority <= 3 ? 'st-confirmed' : h.priority <= 6 ? 'st-sent' : 'st-draft'}" style="min-width:34px;text-align:center">${h.priority}</span></td>
@@ -76,8 +79,8 @@
         ${f('country', t('phCountry'), h.country, 'text', 'placeholder="Saudi Arabia" list="ph-countries"')}
         ${f('city', t('phCity'), h.city, 'text', 'placeholder="Jeddah" list="ph-cities"')}
         <div class="span2">${f('hotel', t('phHotel'), h.hotel, 'text', 'placeholder="Hilton Jeddah"')}</div>
-        <div class="f"><label for="ph-priority">${t('phPriority')}</label><select class="inp" id="ph-priority">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => `<option ${Number(h.priority || 5) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
-        <div class="f"><label for="ph-stars">${t('phStars')}</label><select class="inp" id="ph-stars"><option value="">—</option>${[5, 4, 3, 2, 1].map(n => `<option value="${n}" ${Number(h.stars) === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select></div>
+        <div class="f"><label for="ph-priority">${t('phPriority')}</label><select class="inp" id="ph-priority">${[1, 2, 3, 4, 5, 6].map(n => `<option ${Number(h.priority || 5) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
+        <div class="f"><label for="ph-stars">${t('phStars')}</label><select class="inp" id="ph-stars"><option value="">—</option>${[5, 4].map(n => `<option value="${n}" ${Number(h.stars) === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select></div>
         <div class="f span2"><label for="ph-notes">${t('phNotes')}</label><input class="inp" id="ph-notes" value="${esc(h.notes || '')}"></div>
         <label class="check span2"><input type="checkbox" id="ph-active" ${h.active !== false ? 'checked' : ''}> ${t('phActive')}</label>
       </div>
@@ -101,52 +104,101 @@
       else cur += ch;
     }
     if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+    if (q) throw Error('unclosed_csv_quote');
     return rows.map(r => r.map(c => c.trim())).filter(r => r.some(Boolean));
   }
   function csvOut(rows) { return '﻿' + rows.map(r => r.map(c => { const s = String(c ?? ''); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }).join(',')).join('\r\n'); }
   function dl(name, text) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
 
-  async function importFile(file) {
-    let rows;
-    try { rows = parseCSV(await file.text()); } catch (e) { toast(t('phImportErr')); return; }
-    if (!rows.length) { toast(t('phImportErr')); return; }
+  // Validate the complete file before preview or write. Never guess a star rating.
+  function validateImport(rows) {
+    const errors = [], out = [], groups = new Map(), seen = new Set();
+    if (!rows.length) return { errors: [L() === 'ar' ? 'الملف فارغ.' : 'The file is empty.'], rows: [] };
     const hdr = rows[0].map(key);
-    let idx = { country: 0, city: 1, hotel: 2, priority: 3, stars: 4, notes: 5 };
-    if (hdr.includes('hotel') || hdr.includes('city') || hdr.includes('الفندق') || hdr.includes('المدينة')) {
-      const find = (...n) => hdr.findIndex(h => n.includes(h));
-      idx = { country: find('country', 'الدولة'), city: find('city', 'المدينة'), hotel: find('hotel', 'hotel name', 'الفندق'), priority: find('priority', 'rank', 'الأولوية', 'الترتيب'), stars: find('stars', 'star', 'النجوم'), notes: find('notes', 'ملاحظات') };
-      rows = rows.slice(1);
-      if (idx.city < 0 || idx.hotel < 0) { toast(t('phImportErr')); return; }
+    let idx = { country: 0, city: 1, hotel: 2, priority: 3, stars: 4, notes: 5 }, offset = 1;
+    if (hdr.some(h => ['country', 'city', 'hotel', 'الدولة', 'المدينة', 'الفندق'].includes(h))) {
+      const find = (...names) => hdr.findIndex(h => names.includes(h));
+      idx = { country: find('country', 'الدولة'), city: find('city', 'المدينة'), hotel: find('hotel', 'hotel name', 'الفندق'), priority: find('priority', 'rank', 'الأولوية', 'الترتيب'), stars: find('stars', 'star', 'rating', 'النجوم', 'التصنيف'), notes: find('notes', 'ملاحظات') };
+      rows = rows.slice(1); offset = 2;
+      if (['country', 'city', 'hotel', 'stars'].some(k => idx[k] < 0)) return { errors: [t('phImportErr')], rows: [] };
     }
-    if (rows.length > 2000) { toast(t('phTooMany')); return; }
-    const have = new Map((PH || []).map(h => [key(h.city) + '|' + key(h.hotel), h]));
-    const ins = [], upd = []; let skip = 0; const seen = new Set();
-    for (const r of rows) {
-      const g = k => idx[k] >= 0 ? (r[idx[k]] || '').trim() : '';
-      const city = g('city'), hotel = g('hotel');
-      if (!city || !hotel) { skip++; continue; }
-      const k = key(city) + '|' + key(hotel); if (seen.has(k)) { skip++; continue; } seen.add(k);
-      const row = { agency_id: Cloud.agencyId, country: g('country') || null, city, hotel, priority: nInt(g('priority'), 1, 10) || 5 };
-      const st = nInt(g('stars'), 1, 5); if (st) row.stars = st;
-      const nt = g('notes'); if (nt) row.notes = nt;
-      const ex = have.get(k);
-      if (ex) upd.push({ id: ex.id, ...row }); else ins.push(row);
-    }
-    for (let i = 0; i < ins.length; i += 500) { const { error } = await Cloud.sb.from(T).insert(ins.slice(i, i + 500)); if (error) { toast(friendlyErr(error)); PH = null; load(); return; } }
-    for (let i = 0; i < upd.length; i += 500) { const { error } = await Cloud.sb.from(T).upsert(upd.slice(i, i + 500)); if (error) { toast(friendlyErr(error)); PH = null; load(); return; } }
-    toast(t('phImported', { a: ins.length, u: upd.length, s: skip }));
-    PH = null; load();
+    if (!rows.length || rows.length > 2000) return { errors: [rows.length ? t('phTooMany') : t('phImportErr')], rows: [] };
+    const digits = s => String(s).replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 1632)).replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 1776));
+    rows.forEach((r, i) => {
+      const get = k => idx[k] >= 0 ? String(r[idx[k]] || '').trim().replace(/\s+/g, ' ') : '';
+      const country = get('country'), city = get('city'), hotel = get('hotel');
+      const line = L() === 'ar' ? 'صف ' + (i + offset) + ': ' : 'Row ' + (i + offset) + ': ';
+      if (!country || !city || !hotel) { errors.push(line + (L() === 'ar' ? 'الدولة والمدينة واسم الفندق مطلوبة.' : 'Country, city and hotel are required.')); return; }
+      const gk = key(country) + '|' + key(city), hk = key(city) + '|' + key(hotel);
+      if (seen.has(hk)) { errors.push(line + (L() === 'ar' ? 'فندق مكرر: ' : 'Duplicate hotel: ') + hotel); return; }
+      seen.add(hk);
+      const group = groups.get(gk) || { country, city, rows: [] }; groups.set(gk, group);
+      const stars = Number(digits(get('stars')).replace(/stars?|نجوم|[★☆⭐]/gi, '').trim());
+      const priority = get('priority') ? Number(digits(get('priority'))) : group.rows.length + 1;
+      if (![4, 5].includes(stars)) errors.push(line + (L() === 'ar' ? 'التصنيف لازم يكون 4 أو 5 نجوم.' : 'Stars must be 4 or 5.'));
+      if (!Number.isInteger(priority) || priority < 1 || priority > 6) errors.push(line + (L() === 'ar' ? 'الأولوية من 1 إلى 6 فقط.' : 'Priority must be from 1 to 6.'));
+      if (country.length > 100 || city.length > 150 || hotel.length > 250 || get('notes').length > 1000) errors.push(line + (L() === 'ar' ? 'النص أطول من الحد المسموح.' : 'A field exceeds the allowed length.'));
+      const row = { country, city, hotel, priority, stars, notes: get('notes') || null };
+      group.rows.push(row); out.push(row);
+    });
+    const cityCountries = new Map();
+    groups.forEach(g => {
+      const prev = cityCountries.get(key(g.city));
+      if (prev && prev !== key(g.country)) errors.push(g.city + ': ' + (L() === 'ar' ? 'استخدم اسم مدينة مميزًا لكل دولة.' : 'Use a distinct city label for each country.'));
+      cityCountries.set(key(g.city), key(g.country));
+      const n4 = g.rows.filter(r => r.stars === 4).length, n5 = g.rows.filter(r => r.stars === 5).length;
+      if (g.rows.length !== 6 || n4 !== 2 || n5 !== 4) errors.push(g.city + ': ' + (L() === 'ar' ? 'المطلوب 6 فنادق: 2 أربع نجوم و4 خمس نجوم.' : 'Each city needs 6 hotels: 2 four-star and 4 five-star.'));
+      if (new Set(g.rows.map(r => r.priority)).size !== g.rows.length) errors.push(g.city + ': ' + (L() === 'ar' ? 'الأولوية مكررة.' : 'Duplicate priority.'));
+    });
+    return { rows: out, errors, groups: [...groups.values()] };
+  }
+  function importError(message) {
+    modal(t('phImport'), `<div class="warn-box">${esc(message)}</div>`, `<button class="btn" data-act="closeModal">${t('close') || 'Close'}</button>`);
+  }
+  async function importFile(file) {
+    if (PHBUSY) return;
+    let parsed;
+    try { parsed = validateImport(parseCSV(await file.text())); } catch (_) { return importError(t('phImportErr')); }
+    if (parsed.errors.length) return modal(t('phImport'), `<p>${L() === 'ar' ? 'لم يُحفظ أي تعديل. أصلح التالي وأعد رفع الملف:' : 'Nothing was changed. Fix these items and upload again:'}</p><ul>${parsed.errors.slice(0, 25).map(e => `<li>${esc(e)}</li>`).join('')}</ul>`, `<button class="btn" data-act="closeModal">${t('cancel')}</button>`);
+    PHBUSY = true;
+    try {
+      const { data, error } = await Cloud.sb.rpc('wejha_import_preferred', { p_agency: Cloud.agencyId, p_rows: parsed.rows, p_commit: false });
+      if (error) throw error;
+      PHIMPORT = { rows: parsed.rows, revision: data.revision };
+      modal(L() === 'ar' ? 'معاينة ملف الفنادق' : 'Preview hotel import', `<p>${L() === 'ar' ? 'سيتم اعتماد 6 فنادق لكل مدينة في هذا الملف. الفنادق القديمة غير المختارة ستُوقَف مع الاحتفاظ بها، والمدن غير الموجودة في الملف لن تتغير.' : 'Each city in this file will have 6 active hotels. Previous hotels not selected will be archived, and cities outside this file stay unchanged.'}</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('phCity')}</th><th>4★</th><th>5★</th><th>${L() === 'ar' ? 'إيقاف قديم' : 'Archive'}</th></tr></thead><tbody>${(data.cities || []).map(g => `<tr><td>${esc(g.city)} · ${esc(g.country)}</td><td>2</td><td>4</td><td>${g.archived}</td></tr>`).join('')}</tbody></table></div><p class="small muted">${data.added} ${L() === 'ar' ? 'جديد' : 'new'} · ${data.updated} ${L() === 'ar' ? 'تحديث' : 'updated'}</p>`, `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="phConfirmImport">${L() === 'ar' ? 'اعتماد الملف' : 'Apply file'}</button>`);
+    } catch (e) { importError(friendlyErr(e)); }
+    finally { PHBUSY = false; }
+  }
+  async function confirmImport() {
+    if (PHBUSY || !PHIMPORT) return;
+    PHBUSY = true;
+    const button = document.querySelector('[data-act="phConfirmImport"]'); if (button) button.disabled = true;
+    try {
+      const { data, error } = await Cloud.sb.rpc('wejha_import_preferred', { p_agency: Cloud.agencyId, p_rows: PHIMPORT.rows, p_commit: true, p_revision: PHIMPORT.revision });
+      if (error) throw error;
+      PHIMPORT = null; closeModal();
+      toast(L() === 'ar' ? `تم اعتماد ${data.hotels} فندق وإيقاف ${data.archived} من الخيارات القديمة.` : `${data.hotels} hotels applied; ${data.archived} previous choices archived.`);
+      PH = null; await load();
+    } catch (e) { PHIMPORT = null; importError(friendlyErr(e)); }
+    finally { PHBUSY = false; }
   }
 
+
   Object.assign(ACT, {
+    phConfirmImport: confirmImport,
+    phArchived: () => { PHARCH = !PHARCH; rerenderSafe(); },
     phNew: () => form({ priority: 5, active: true, city: PHF !== 'all' ? PHF : '', country: PHF !== 'all' ? ((PH || []).find(h => h.city === PHF) || {}).country : '' }),
     phOpen: el => { const h = (PH || []).find(x => x.id === el.dataset.id); if (h) form({ ...h }); },
     phCity: el => { PHF = el.dataset.val || 'all'; rerenderSafe(); },
     phSave: async () => {
       const v = id => String((document.getElementById('ph-' + id) || {}).value || '').trim();
-      const row = { agency_id: Cloud.agencyId, country: v('country') || null, city: v('city'), hotel: v('hotel'), priority: nInt(v('priority'), 1, 10) || 5,
+      const row = { agency_id: Cloud.agencyId, country: v('country') || null, city: v('city'), hotel: v('hotel'), priority: nInt(v('priority'), 1, 6) || 1,
         stars: nInt(v('stars'), 1, 5), notes: v('notes') || null, active: document.getElementById('ph-active').checked };
-      if (!row.city || !row.hotel) { toast(t('phNeed')); return; }
+      if (!row.country || !row.city || !row.hotel || (row.active && ![4,5].includes(row.stars))) { toast(L() === 'ar' ? 'الدولة والمدينة والفندق وتصنيف 4 أو 5 نجوم مطلوبة.' : 'Country, city, hotel and a 4- or 5-star rating are required.'); return; }
+      const all = PH || [], same = all.filter(h => h.active !== false && key(h.city) === key(row.city));
+      const after = all.filter(h => (!PHE || h.id !== PHE.id) && h.active !== false && key(h.city) === key(row.city)); if(row.active) after.push(row);
+      const violations = a => Math.max(0,a.length-6)+Math.max(0,a.filter(h=>h.stars===4).length-2)+Math.max(0,a.filter(h=>h.stars===5).length-4)+a.filter(h=>![4,5].includes(h.stars)).length;
+      if (violations(after)>0 && violations(after)>=violations(same)) { toast(L() === 'ar' ? 'لكل مدينة 6 فنادق فقط: 2 أربع نجوم و4 خمس نجوم. استخدم ملف الاستيراد لتحديث القائمة كاملة.' : 'Use 6 hotels per city: 2 four-star and 4 five-star. Import a full city list to replace the current selection.'); return; }
       const q = PHE && PHE.id ? Cloud.sb.from(T).update(row).eq('id', PHE.id) : Cloud.sb.from(T).insert(row);
       const { error } = await q;
       if (error) { toast(/duplicate|unique/i.test(error.message || '') ? (L() === 'ar' ? 'هذا الفندق موجود في نفس المدينة.' : 'This hotel is already listed for this city.') : friendlyErr(error)); return; }
@@ -156,14 +208,14 @@
     phMove: async el => {
       const h = (PH || []).find(x => x.id === el.dataset.id); if (!h) return;
       const rows = PH.filter(x => x.city === h.city); const i = rows.indexOf(h); const o = rows[i + Number(el.dataset.d)]; if (!o) return;
-      let a = o.priority, b = h.priority; if (a === b) { a = Math.max(1, Math.min(10, h.priority + Number(el.dataset.d))); }
+      let a = o.priority, b = h.priority; if (a === b) { a = Math.max(1, Math.min(6, h.priority + Number(el.dataset.d))); }
       const r1 = await Cloud.sb.from(T).update({ priority: a }).eq('id', h.id);
       const r2 = a === o.priority ? await Cloud.sb.from(T).update({ priority: b }).eq('id', o.id) : { error: null };
       if (r1.error || r2.error) toast(friendlyErr(r1.error || r2.error));
       PH = null; load();
     },
-    phTemplate: () => dl('preferred-hotels-template.csv', csvOut([['country', 'city', 'hotel', 'priority', 'stars'], ['Saudi Arabia', 'Jeddah', 'Hilton Jeddah', 1, 5], ['Saudi Arabia', 'Makkah', 'Swissotel Makkah', 1, 5], ['UAE', 'Dubai', 'Atlantis The Palm', 2, 5]])),
-    phExport: () => dl('preferred-hotels.csv', csvOut([['country', 'city', 'hotel', 'priority', 'stars', 'notes', 'active'], ...(PH || []).map(h => [h.country || '', h.city, h.hotel, h.priority, h.stars || '', h.notes || '', h.active ? 'yes' : 'no'])]))
+    phTemplate: () => dl('preferred-hotels-6-per-city.csv', csvOut([['country', 'city', 'hotel', 'priority', 'stars', 'notes'], ...Array.from({ length: 6 }, (_, i) => ['', '', '', i + 1, i < 2 ? 4 : 5, ''])])),
+    phExport: () => dl('preferred-hotels.csv', csvOut([['country', 'city', 'hotel', 'priority', 'stars', 'notes'], ...(PH || []).filter(h => h.active !== false).map(h => [h.country || '', h.city, h.hotel, h.priority, h.stars || '', h.notes || ''])]))
   });
 
   document.addEventListener('change', e => { if (e.target && e.target.id === 'ph-file' && e.target.files && e.target.files[0]) { const f = e.target.files[0]; e.target.value = ''; importFile(f); } });
