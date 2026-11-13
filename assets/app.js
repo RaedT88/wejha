@@ -2133,8 +2133,11 @@ window.LACT = {
     od_title: ['Order {id}', 'الطلب {id}'], od_timeline: ['Timeline', 'المراحل'], od_chat: ['Conversation', 'المحادثة'], od_lastReply: ['Last assistant reply', 'آخر رد من المساعد'],
     od_mode_bot: ['The assistant is answering this customer.', 'المساعد هو من يرد على هذا العميل.'], od_mode_human: ['{n} took over. The assistant is paused for this customer.', '{n} تولّى المحادثة، والمساعد متوقف لهذا العميل.'],
     od_mode_mine: ['You took over. The assistant is paused for this customer.', 'أنت تتولى المحادثة، والمساعد متوقف لهذا العميل.'], od_mode_unknown: ['Checking who is answering…', 'جارٍ التحقق من المسؤول عن الرد…'],
-    od_claim: ['Take over', 'تولَّ المحادثة'], od_release: ['Hand back to assistant', 'أعِدها للمساعد'], od_send: ['Send on WhatsApp', 'أرسل على واتساب'],
+    od_claim: ['Take over', 'تولَّ المحادثة'], od_release: ['Hand back to the assistant', 'رجّع المحادثة للوكيل'], od_send: ['Send on WhatsApp', 'أرسل على واتساب'],
     od_msgPh: ['Write to the customer…', 'اكتب للعميل…'], od_claimFirst: ['Take over the conversation to reply.', 'تولَّ المحادثة لتتمكن من الرد.'],
+    od_hintBot: ['The assistant answers this customer now. When you send, it pauses and you take over the chat.', 'الوكيل يرد على العميل الآن. أول ما ترسل ردك، يتوقف الوكيل وتتولى أنت المحادثة.'],
+    od_hintMine: ['You are answering this customer; the assistant is paused. Hand it back when you finish.', 'أنت ترد على العميل والوكيل متوقف. رجّع المحادثة للوكيل لما تخلص.'],
+    od_takingOver: ['Taking over…', 'جاري التولي…'], od_waitN: ['Sending in {n}s…', 'إرسال بعد {n} ث…'], od_sending: ['Sending…', 'جاري الإرسال…'],
     od_settling: ['Taken over. You can send in a few seconds (the assistant is finishing its last step).', 'تم التولي. يمكنك الإرسال بعد ثوانٍ (المساعد ينهي آخر خطوة).'],
     od_claimed: ['You took over the conversation.', 'توليت المحادثة.'], od_released: ['Handed back to the assistant.', 'أُعيدت المحادثة للمساعد.'], od_sent: ['Message sent.', 'تم إرسال الرسالة.'],
     od_readOnly: ['Your role can view orders but not reply.', 'صلاحيتك تسمح بعرض الطلبات دون الرد.'], od_noMessages: ['No messages recorded yet.', 'لا توجد رسائل مسجلة بعد.'],
@@ -2271,7 +2274,7 @@ function opsOpen(id) {
 function opsPaintDetail() {
   const box = $('#od'); const o = opsOrders().find(x => x.request_id === OPS.sel); if (!box || !o) return;
   let msgs = ((OPS.data && OPS.data.messages) || []).filter(m => m.sender === o.sender);
-  if (o.last_reply && !msgs.some(m => m.direction === 'outbound' && m.body === o.last_reply)) msgs = msgs.concat([{ id: 'last', sender: o.sender, direction: 'last', body: o.last_reply, created_at: o.updated_at }]);
+  if (o.last_reply && !msgs.some(m => m.direction === 'outbound')) msgs = msgs.concat([{ id: 'last', sender: o.sender, direction: 'last', body: o.last_reply, created_at: o.updated_at }]);
   msgs = msgs.slice().sort((a, b) => (Date.parse(a.created_at) || 0) - (Date.parse(b.created_at) || 0)).slice(-40);
   const md = OPS.mode[o.sender]; const me = Cloud.on && Cloud.user ? Cloud.user.id : 'demo-user';
   const mine = md && md.mode === 'human' && md.actor_id === me;
@@ -2290,15 +2293,15 @@ function opsPaintDetail() {
     </div>
     <div class="stack od-chat">
       <div class="tiny muted">${t('od_chat')}</div>
-      <div class="chat" id="od-chat">${msgs.length ? msgs.map(m => `<div class="bub ${m.direction === 'inbound' ? 'in' : m.direction === 'staff' ? 'staff' : 'out'}"><div class="tiny muted">${m.direction === 'inbound' ? t('od_customerMsg') : m.direction === 'staff' ? t('od_staffMsg') : m.direction === 'last' ? t('od_lastReply') : t('od_botMsg')} · ${opsTime(m.created_at)}</div><div dir="auto">${esc(m.body)}</div></div>`).join('') : `<p class="tiny muted">${t('od_noMessages')}</p>`}</div>
+      <div class="chat" id="od-chat">${msgs.length ? msgs.map(m => `<div class="bub ${m.direction === 'inbound' ? 'in' : m.direction === 'staff' ? 'staff' : 'out'}"><div class="tiny muted">${m.direction === 'inbound' ? t('od_customerMsg') : m.direction === 'staff' ? t('od_staffMsg') + (m.actor ? ' · ' + esc(m.actor) : '') : m.direction === 'last' ? t('od_lastReply') : t('od_botMsg')} · ${opsTime(m.created_at)}${m.pending ? ' · ' + t('od_sending') : ''}</div><div dir="auto">${esc(m.body)}</div></div>`).join('') : `<p class="tiny muted">${t('od_noMessages')}</p>`}</div>
       <div class="mode-box ${md && md.mode === 'human' ? 'human' : ''}">${ic(md && md.mode === 'human' ? 'user' : 'spark', 'sm')} <span>${modeTxt}</span></div>
       ${!canAct ? `<p class="tiny muted">${t('od_readOnly')}</p>` : `
-      <div class="row" style="gap:8px;flex-wrap:wrap">
-        ${!md || md.mode !== 'human' ? `<button class="btn primary" data-act="opsClaim" data-s="${o.sender}">${ic('user', 'sm')} ${t('od_claim')}</button>` : ''}
-        ${mine ? `<button class="btn" data-act="opsRelease" data-s="${o.sender}">${ic('spark', 'sm')} ${t('od_release')}</button>` : ''}
-      </div>
-      <div class="f"><textarea class="inp" id="od-msg" rows="3" placeholder="${mine ? t('od_msgPh') : t('od_claimFirst')}" ${mine ? '' : 'disabled'} maxlength="4096"></textarea></div>
-      <div class="row" style="justify-content:flex-end"><button class="btn primary" data-act="opsSend" data-s="${o.sender}" ${mine ? '' : 'disabled'}>${ic('send', 'sm')} ${t('od_send')}</button></div>`}
+      ${md && md.mode === 'human' && !mine ? '' : `
+      <div class="f"><textarea class="inp" id="od-msg" rows="3" placeholder="${t('od_msgPh')}" maxlength="4096"></textarea>
+        <div class="tiny muted" style="margin-top:4px">${mine ? t('od_hintMine') : t('od_hintBot')}</div></div>
+      <div class="row" style="justify-content:space-between;gap:8px;flex-wrap:wrap">
+        ${mine ? `<button class="btn" data-act="opsRelease" data-s="${o.sender}">${ic('spark', 'sm')} ${t('od_release')}</button>` : '<span></span>'}
+        <button class="btn primary" data-act="opsSend" data-s="${o.sender}">${ic('send', 'sm')} ${t('od_send')}</button></div>`}`}
     </div>
   </div>`;
   const c = $('#od-chat'); if (c) c.scrollTop = c.scrollHeight;
@@ -2337,9 +2340,32 @@ Object.assign(ACT, {
   opsRelease: async el => { const s = el.dataset.s; el.disabled = true; const r = await opsAction('release', s); if (r) { OPS.mode[s] = { mode: 'bot' }; toast(t('od_released')); } opsPaintDetail(); },
   opsSend: async el => {
     const s = el.dataset.s; const ta = $('#od-msg'); const body = (ta.value || '').trim(); if (!body) { ta.focus(); return toast(t('oe_invalid_message')); }
+    const me = Cloud.on && Cloud.user ? Cloud.user.id : 'demo-user'; const md = OPS.mode[s];
     const last = ((OPS.data && OPS.data.messages) || []).filter(m => m.sender === s && m.direction === 'inbound').map(m => m.created_at).sort().pop() || '';
-    el.disabled = true; const r = await opsAction('send', s, { body, last_inbound_at: last }); el.disabled = false;
-    if (r) { OPS.data.messages = (OPS.data.messages || []).concat([{ id: 'local-' + Date.now(), sender: s, direction: 'staff', body, created_at: new Date().toISOString() }]); toast(t('od_sent')); opsPaintDetail(); }
+    el.disabled = true; const label = el.innerHTML;
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    try {
+      if (!(md && md.mode === 'human' && md.actor_id === me)) {
+        el.textContent = t('od_takingOver');
+        const c = await opsAction('claim', s); if (!c) return;
+        OPS.mode[s] = { mode: 'human', actor_id: me, actor_name: '' };
+        try { const o = opsOrders().find(x => x.request_id === OPS.sel); const r = o && typeof DSP !== 'undefined' && DSP.rows[o.request_id]; if (o && typeof dspSave === 'function' && (!r || !r.accepted_at)) await dspSave([{ ...(r || { request_id: o.request_id, history: {} }), request_id: o.request_id, staff_id: (r && r.staff_id) || me, accepted_at: new Date().toISOString() }]); } catch (x) { }
+        for (let i = 9; i > 0; i--) { el.textContent = t('od_waitN', { n: i }); await wait(1000); }
+      }
+      el.textContent = t('od_sending');
+      let r = null, err = '';
+      for (let tries = 0; tries < 6; tries++) {
+        try { r = await opsCall({ op: 'send', sender: s, body, last_inbound_at: last }); err = r && r.ok === false ? (r.error || 'generic') : ''; }
+        catch (e) { err = e.code || e.message || 'generic'; }
+        if (err !== 'handoff_settling') break;
+        await wait(3000);
+      }
+      if (err) { toast(opsErr(err)); return; }
+      ta.value = '';
+      OPS.data.messages = (OPS.data.messages || []).concat([{ id: 'local-' + Date.now(), sender: s, direction: 'staff', body, created_at: new Date().toISOString(), pending: true }]);
+      toast(t('od_sent')); opsPaintDetail();
+      setTimeout(() => opsLoad(true).then(() => { if ($('#od')) opsPaintDetail(); }), 4000);
+    } finally { el.disabled = false; if (document.body.contains(el)) el.innerHTML = label; }
   },
   opsPhoneAdd: async () => {
     try { await Cloud.rpc('add_agency_phone', { p_phone: $('#ph-num').value, p_label: $('#ph-label').value }); OPS.phones = null; await opsLoadPhones(); opsLoad(true); toast(t('saved')); }
@@ -2391,7 +2417,7 @@ async function opsDemoCall(body) {
   const T = {
     dp_staff: ['Staff', 'الموظف'], dp_unassigned: ['Unassigned', 'غير مُسند'], dp_late: ['Late', 'متأخر'], dp_accepted: ['Accepted', 'مُستلم'],
     dp_waiting: ['Waiting {m} min', 'بانتظار الاستلام {m} د'], dp_mine: ['My orders', 'طلباتي'], dp_iam: ['I am', 'أنا'], dp_pickMe: ['Choose your name', 'اختر اسمك'],
-    dp_accept: ['Accept order', 'استلمت الطلب'], dp_reassign: ['Reassign', 'حوّل لموظف'], dp_assign: ['Assign to', 'أسند إلى'], dp_unassign: ['Unassign', 'إلغاء الإسناد'], dp_unassigned_done: ['Unassigned', 'تم إلغاء الإسناد'], dp_toQuote: ['Turn into quote', 'حوّل لعرض سعر'],
+    dp_accept: ['I’m handling this order', 'أنا مسؤول عن الطلب'], dp_reassign: ['Reassign', 'حوّل لموظف'], dp_assign: ['Assign to', 'أسند إلى'], dp_unassign: ['Unassign', 'إلغاء الإسناد'], dp_unassigned_done: ['Unassigned', 'تم إلغاء الإسناد'], dp_toQuote: ['Turn into quote', 'حوّل لعرض سعر'],
     dp_assignedTo: ['Assigned to {n}', 'مُسند إلى {n}'], dp_acceptedBy: ['Accepted by {n}', 'استلمه {n}'], dp_history: ['Assignment history', 'سجل الإسناد'],
     dp_duty: ['On duty', 'على رأس العمل'], dp_dutyTitle: ['Team on duty', 'الفريق المناوب'], dp_dutyHint: ['New orders rotate between staff on duty. Unaccepted orders move to the next person after {m} minutes.', 'الطلبات الجديدة تتوزع بالدور على المناوبين. الطلب غير المُستلم ينتقل للموظف التالي بعد {m} دقائق.'],
     dp_late_k: ['Late (not accepted)', 'متأخرة (غير مستلمة)'], dp_mapTitle: ['Live request pulse', 'نبض الطلبات المباشر'], dp_mapHint: ['Orders by destination; pulsing dots are new in the last 30 minutes.', 'الطلبات حسب الوجهة؛ النقاط النابضة جديدة خلال آخر 30 دقيقة.'],
