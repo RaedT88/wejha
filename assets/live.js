@@ -190,7 +190,7 @@
       const col = staff ? COL.staff : fail ? COL.fail : fresh ? COL.fresh : booked === n ? COL.booked : COL.active;
       const r = Math.min(34, 12 + Math.sqrt(n) * 5);
       const icon = LL.divIcon({ className: '', html: `<div class="cc-pin ${fresh ? 'fresh' : ''}" style="--c:${col};width:${r * 2}px;height:${r * 2}px"><span>${n}</span></div>`, iconSize: [r * 2, r * 2], iconAnchor: [r, r] });
-      const pop = `<div class="cc-pop"><b>${esc(dspCityName(g.k))}</b><div class="cc-popk"><span>${n} ${t('lv_req')}</span><span>${booked} ${t('lv_bk')}</span></div>${g.list.slice(0, 6).map(o => `<a href="#orders" data-act="lvOpen" data-v="${esc(o.request_id || '')}"><span>${esc(o.hotel || reqText(o.request_text).split('\n')[0].slice(0, 38))}</span> ${opsPill(o.status)}</a>`).join('')}</div>`;
+      const pop = `<div class="cc-pop"><b>${esc(dspCityName(g.k))}</b><div class="cc-popk"><span>${n} ${t('lv_req')}</span><span>${booked} ${t('lv_bk')}</span></div>${g.list.slice(0, 6).map(o => `<a role="button" tabindex="0" style="cursor:pointer" data-act="lvOpen" data-v="${esc(o.request_id || '')}"><span>${esc(o.hotel || reqText(o.request_text).split('\n')[0].slice(0, 38))}</span> ${opsPill(o.status)}</a>`).join('')}</div>`;
       LL.marker(g.c, { icon, riseOnHover: true }).bindPopup(pop, { maxWidth: 320, className: 'cc-popup' }).bindTooltip(`${esc(dspCityName(g.k))} · ${n}`, { direction: 'top', offset: [0, -r] }).addTo(LV.layer);
       pts.push(g.c);
     }
@@ -231,7 +231,7 @@
   };
   Object.assign(ACT, {
     lvRefresh: async () => { await opsLoad(true); paint(); },
-    lvOpen: el => { OPS.q = el.dataset.v || ''; if (LV.map) LV.map.closePopup(); go('orders'); },
+    lvOpen: el => { const id = el.dataset.v || ''; if (id && opsOrders().some(o => o.request_id === id)) { opsOpen(id); if (LV.map) LV.map.closePopup(); return; } OPS.q = id; if (LV.map) LV.map.closePopup(); go('orders'); },
     lvGo: el => { OPS.f = el.dataset.v || 'all'; go('orders'); },
     lvRange: el => { LV.range = el.dataset.v; LV.fitted = false; document.querySelectorAll('.cc-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === LV.range)); paint(); },
     lvF: el => { LV.f = el.dataset.v; LV.fitted = false; paint(); },

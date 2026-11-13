@@ -2498,7 +2498,7 @@ function dspDutyCard() {
     const on = !off.includes(s.id);
     return `<tr>
       <td><b>${esc(s.name)}</b>${s.id === me ? ` <span class="tag">${t('you')}</span>` : ''}</td>
-      <td><button class="chip ${on ? 'on' : ''}" data-act="dspDuty" data-v="${s.id}" ${admin || s.id === me ? '' : 'disabled'} title="${t('dp_toggleHint')}">${on ? '● ' + t('dp_accepting') : '⏸ ' + t('dp_paused')}</button></td>
+      <td><button class="chip ${on ? 'on' : ''}" data-act="dspDuty" data-v="${s.id}" ${admin || s.id === me ? '' : 'disabled'} title="${t('dp_toggleHint')}">${on ? '● ' + t('dp_accepting') : '⏸ ' + t('dp_paused')}</button><div class="tiny muted" style="margin-top:3px">${on ? t('dp_onSub') : t('dp_offSub')}${admin || s.id === me ? ' · ' + t('dp_clickSwitch') : ''}</div></td>
       <td class="num">${mine.length}</td>
       <td class="num">${acc}</td>
       <td class="num" style="${late ? 'color:var(--bad);font-weight:600' : ''}">${late}</td>
@@ -2508,7 +2508,7 @@ function dspDutyCard() {
   }).join('');
   return `<div class="card" style="padding:12px 14px;margin-bottom:14px">
     <div class="row between" style="flex-wrap:wrap;gap:10px;margin-bottom:6px">
-      <div><b>${t('dp_teamTitle')}</b><div class="tiny muted">${t('dp_dutyHint', { m: DSP_SLA() })}</div></div>
+      <div><b>${t('dp_teamTitle')}</b><ol class="tiny muted dsp-how" style="margin:4px 0 0;padding-inline-start:18px;line-height:1.7"><li>${t('dp_how1')}</li><li>${t('dp_how2', { m: DSP_SLA() })}</li><li>${t('dp_how3')}</li><li>${t('dp_how4')}</li></ol></div>
       <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
         ${un ? `<button class="btn sm ${OPS.f === 'st:none' ? 'primary' : ''}" data-act="dspView" data-v="none">${ic('alert', 'sm')} ${t('dp_unassigned')}: <b>${un}</b></button>` : ''}
         ${can('edit') && un ? `<button class="btn sm" data-act="dspAutoNow">${ic('refresh', 'sm')} ${t('dp_autoNow')}</button>` : ''}
@@ -2576,7 +2576,7 @@ function dspDetailPanel(o) {
         ${log.length ? `<div class="tiny muted">${t('dp_history')}: ${log.map(l => `${esc(dspStaffName(l.s))} (${t('dp_by_' + l.by)})`).join(' ← ')}</div>` : ''}</div>
       <div class="row" style="gap:6px;flex-wrap:wrap">
         ${canEdit && r && !r.accepted_at ? `<button class="btn primary sm" data-act="dspAccept" data-id="${esc(o.request_id)}">${ic('check', 'sm')} ${t('dp_accept')}</button>` : ''}
-        ${canEdit ? `<select class="inp sm" id="dsp-re" style="width:auto"><option value="">${r && r.staff_id ? t('dp_reassign') : t('dp_assign')}…</option>${DSP_STAFF().filter(s => !r || s.id !== r.staff_id).map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}${r && r.staff_id ? `<option value="__none__">✕ ${t('dp_unassign')}</option>` : ''}</select>` : ''}
+        ${canEdit ? `<label class="tiny muted" for="dsp-re" style="align-self:center">${t('dp_transferLbl')}</label><select class="inp sm" id="dsp-re" style="width:auto"><option value="">${r && r.staff_id ? t('dp_reassign') : t('dp_assign')}…</option>${DSP_STAFF().filter(s => !r || s.id !== r.staff_id).map(s => `<option value="${s.id}">${esc(s.name)} — ${dspIsOn(s.id) ? t('dp_accepting') : t('dp_paused')}</option>`).join('')}${r && r.staff_id ? `<option value="__none__">✕ ${t('dp_unassign')}</option>` : ''}</select>` : ''}
         ${canEdit ? `<button class="btn sm" data-act="dspQuote" data-id="${esc(o.request_id)}">${ic('doc', 'sm')} ${t('dp_toQuote')}</button>` : ''}
       </div></div></div>`;
 }
@@ -2691,6 +2691,66 @@ document.addEventListener('change', e => { const el = e.target; if (el && el.cla
     dspAccept: async el => { const r = DSP.rows[el.dataset.id]; if (!r) return; await dspSave([{ ...r, accepted_at: new Date().toISOString() }]); toast(t('dp_saved')); opsPaintDetail(); opsPaint(); },
     dspDuty: async el => { const meta = DSP.rows.__duty__ || { request_id: '__duty__', staff_id: null, history: { off: [], rr: 0 } }; const off = new Set(meta.history.off || []); off.has(el.dataset.v) ? off.delete(el.dataset.v) : off.add(el.dataset.v); await dspSave([{ ...meta, history: { ...meta.history, off: [...off] } }]); opsPaint(); },
     dspQuote: async el => { const o = opsOrders().find(x => x.request_id === el.dataset.id); if (o) await dspToQuote(o); },
+  });
+})();
+
+/* ---------- Clearer team wording (availability + transfer) ---------- */
+function dspIsOn(id) { const m = DSP.rows.__duty__; return !((m && m.history && m.history.off) || []).includes(id); }
+(function () {
+  const X = {
+    dp_newAssign: ['Available for new orders?', 'متاح لاستقبال طلبات جديدة؟'], dp_accepting: ['Available', 'متاح'], dp_paused: ['Not available', 'غير متاح'],
+    dp_onSub: ['Gets new orders', 'تصله طلبات جديدة'], dp_offSub: ['Gets no new orders', 'لا تصله طلبات جديدة'], dp_clickSwitch: ['click to switch', 'اضغط للتبديل'],
+    dp_toggleHint: ['Not available = no new orders go to this person. Orders already with them stay with them.', 'غير متاح = لا تُرسل له طلبات جديدة. الطلبات اللي عنده تبقى معه.'],
+    dp_openCol: ['Orders with them', 'طلبات عنده'], dp_acceptedCol: ['Accepted', 'استلمها'], dp_lateCol: ['Late (not accepted)', 'متأخرة (لم يستلمها)'],
+    dp_viewOrders: ['Show their orders', 'عرض طلباته'], dp_reassign: ['Choose staff', 'اختر الموظف'], dp_assign: ['Choose staff', 'اختر الموظف'], dp_transferLbl: ['Transfer this order to:', 'تحويل الطلب إلى:'],
+    dp_how1: ['A new WhatsApp order goes automatically to the next available staff member, in turn.', 'أي طلب واتساب جديد يروح تلقائياً للموظف المتاح التالي بالدور.'],
+    dp_how2: ['They open it and press “Accept order” within {m} minutes; otherwise it moves to the next available person.', 'الموظف يفتح الطلب ويضغط «استلمت الطلب» خلال {m} دقائق، وإلا ينتقل تلقائياً للمتاح التالي.'],
+    dp_how3: ['To send an order to a specific person: open the order → “Transfer this order to”, or change the Staff column in the table.', 'لتحويل طلب لموظف معيّن: افتح الطلب ← «تحويل الطلب إلى»، أو غيّر عمود «الموظف» في الجدول.'],
+    dp_how4: ['Going on a break or leaving? Set yourself to “Not available” so new orders skip you.', 'رايح استراحة أو خلصت شيفتك؟ خلّي حالتك «غير متاح» عشان الطلبات الجديدة ما توصلك.']
+  };
+  for (const k in X) { I18N.en[k] = X[k][0]; I18N.ar[k] = X[k][1]; }
+})();
+
+/* ---------- Order detail: move to the previous / next order without closing ----------
+   The list is whatever the user was looking at when the order was opened (orders table,
+   command-centre queue/latest list, or map popup), in the same order. */
+(function orderNav() {
+  const NAV_TX = { on_prev: ['Previous', 'السابق'], on_next: ['Next', 'التالي'], on_pos: ['{i} of {n}', '{i} من {n}'], on_keys: ['Tip: use ← → to move between orders', 'تلميح: استخدم ← → للتنقل بين الطلبات'] };
+  for (const k in NAV_TX) { I18N.en[k] = NAV_TX[k][0]; I18N.ar[k] = NAV_TX[k][1]; }
+  let NAV = [];
+  const visibleIds = () => {
+    const ids = [];
+    document.querySelectorAll('#app [data-act="opsOpen"][data-id], #app [data-act="lvOpen"][data-v], .leaflet-popup [data-act="lvOpen"][data-v]').forEach(el => { const v = el.dataset.id || el.dataset.v; if (v && !ids.includes(v)) ids.push(v); });
+    return ids;
+  };
+  const _open = opsOpen;
+  opsOpen = function (id, keepNav) {
+    if (!keepNav) { NAV = visibleIds(); if (!NAV.includes(id)) NAV = opsOrders().slice().sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at))).map(o => o.request_id); }
+    return _open(id);
+  };
+  function step(d) {
+    const ids = NAV.filter(id => opsOrders().some(o => o.request_id === id)); const i = ids.indexOf(OPS.sel);
+    const nx = ids[i + d]; if (!nx) return; opsOpen(nx, true);
+  }
+  const _pd = opsPaintDetail;
+  opsPaintDetail = function () {
+    _pd();
+    const box = document.getElementById('od'); if (!box || !OPS.sel) return;
+    const ids = NAV.filter(id => opsOrders().some(o => o.request_id === id)); const i = ids.indexOf(OPS.sel);
+    if (ids.length < 2 || i < 0) return;
+    box.insertAdjacentHTML('afterbegin', `<div class="row between od-nav" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn sm" data-act="odPrev" ${i > 0 ? '' : 'disabled'}>${ic('chev', 'sm')} ${t('on_prev')}</button>
+      <span class="tiny muted">${t('on_pos', { i: i + 1, n: ids.length })} · ${t('on_keys')}</span>
+      <button class="btn sm" data-act="odNext" ${i < ids.length - 1 ? '' : 'disabled'}>${t('on_next')} ${ic('chev', 'sm')}</button></div>`);
+    const b = box.querySelector('[data-act="odPrev"] svg'); if (b) b.style.transform = document.dir === 'rtl' ? '' : 'rotate(180deg)';
+    const n = box.querySelector('[data-act="odNext"] svg'); if (n) n.style.transform = document.dir === 'rtl' ? 'rotate(180deg)' : '';
+  };
+  Object.assign(ACT, { odPrev: () => step(-1), odNext: () => step(1) });
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('od') || /INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) return;
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const rtl = document.dir === 'rtl'; const fwd = (e.key === 'ArrowLeft') === rtl;
+    e.preventDefault(); step(fwd ? 1 : -1);
   });
 })();
 
