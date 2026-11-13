@@ -10,6 +10,9 @@ begin
  if exists(select 1 from jsonb_to_recordset(p_rows) as x(country text,city text,hotel text) group by lower(btrim(city)),lower(btrim(hotel)) having count(*)>1) then raise exception 'duplicate_hotel';end if;
  if exists(select 1 from jsonb_to_recordset(p_rows) as x(country text,city text,hotel text) group by lower(btrim(city)) having count(distinct lower(btrim(country)))>1) then raise exception 'city_has_multiple_countries';end if;
  if exists(select 1 from jsonb_to_recordset(p_rows) as x(country text,city text,stars int,priority int) group by lower(btrim(country)),lower(btrim(city)) having count(*)<>6 or count(*) filter(where stars=4)<>2 or count(*) filter(where stars=5)<>4 or count(distinct priority)<>6) then raise exception 'each_city_requires_six_hotels_two_four_star_four_five_star';end if;
+ select jsonb_agg(value||jsonb_build_object('priority',rank) order by city_key,rank) into p_rows from (
+  select value,lower(btrim(value->>'city')) as city_key,row_number() over(partition by lower(btrim(value->>'country')),lower(btrim(value->>'city')) order by (value->>'stars')::int,(value->>'priority')::int,ord) as rank from jsonb_array_elements(p_rows) with ordinality as e(value,ord)
+ ) ranked;
  perform pg_advisory_xact_lock(hashtextextended('wejha-preferred:'||p_agency::text,0));
  select md5(coalesce(string_agg(id::text||updated_at::text||active::text,'|' order by id),'')) into rev from public.preferred_hotels where agency_id=p_agency;
  if p_commit and (p_revision is null or p_revision<>rev) then raise exception 'preferred_list_changed_refresh_preview';end if;
