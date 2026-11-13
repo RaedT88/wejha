@@ -6,7 +6,7 @@
   if (typeof ROUTES === 'undefined') return;
   const TX = {
     nav_visa: ['Visa hotel bookings', 'حجوزات التأشيرة'],
-    vSub: ['Refundable hotel bookings for Schengen, UK, Canada and US visa files. The WhatsApp agent collects the details; your team books, sends the file and cancels before the deadline.', 'حجوزات فنادق قابلة للإلغاء لملفات تأشيرة شنغن وبريطانيا وكندا وأمريكا. الوكيل يجمع البيانات على واتساب، وفريقك يحجز ويرسل الملف ويلغي قبل الموعد.'],
+    vSub: ['Refundable hotel bookings for Schengen, UK, Canada, US and Brazil visa files. The WhatsApp agent collects the details; your team books, sends the file and cancels before the deadline.', 'حجوزات فنادق قابلة للإلغاء لملفات تأشيرة شنغن وبريطانيا وكندا وأمريكا والبرازيل. الوكيل يجمع البيانات على واتساب، وفريقك يحجز ويرسل الملف ويلغي قبل الموعد.'],
     vTabReq: ['Requests', 'الطلبات'], vTabHotels: ['Hotels per country', 'الفنادق لكل دولة'], vTabSet: ['Settings', 'الإعدادات'],
     vOn: ['Service ON — the agent offers it on WhatsApp', 'الخدمة شغّالة — الوكيل يعرضها على واتساب'], vOff: ['Service OFF — the agent does not offer it', 'الخدمة متوقفة — الوكيل لا يعرضها'],
     vTurnOff: ['Stop service', 'إيقاف الخدمة'], vTurnOn: ['Start service', 'تشغيل الخدمة'], vOffDone: ['Visa bookings stopped', 'تم إيقاف حجوزات التأشيرة'], vOnDone: ['Visa bookings started', 'تم تشغيل حجوزات التأشيرة'],
@@ -40,7 +40,7 @@
     ['Austria', 'النمسا'], ['Belgium', 'بلجيكا'], ['Bulgaria', 'بلغاريا'], ['Croatia', 'كرواتيا'], ['Czechia', 'التشيك'], ['Denmark', 'الدنمارك'], ['Estonia', 'إستونيا'], ['Finland', 'فنلندا'],
     ['France', 'فرنسا'], ['Germany', 'ألمانيا'], ['Greece', 'اليونان'], ['Hungary', 'المجر'], ['Iceland', 'آيسلندا'], ['Italy', 'إيطاليا'], ['Latvia', 'لاتفيا'], ['Liechtenstein', 'ليختنشتاين'],
     ['Lithuania', 'ليتوانيا'], ['Luxembourg', 'لوكسمبورغ'], ['Malta', 'مالطا'], ['Netherlands', 'هولندا'], ['Norway', 'النرويج'], ['Poland', 'بولندا'], ['Portugal', 'البرتغال'], ['Romania', 'رومانيا'],
-    ['Slovakia', 'سلوفاكيا'], ['Slovenia', 'سلوفينيا'], ['Spain', 'إسبانيا'], ['Sweden', 'السويد'], ['Switzerland', 'سويسرا'], ['United Kingdom', 'المملكة المتحدة'], ['Canada', 'كندا'], ['United States', 'الولايات المتحدة']
+    ['Slovakia', 'سلوفاكيا'], ['Slovenia', 'سلوفينيا'], ['Spain', 'إسبانيا'], ['Sweden', 'السويد'], ['Switzerland', 'سويسرا'], ['United Kingdom', 'المملكة المتحدة'], ['Canada', 'كندا'], ['United States', 'الولايات المتحدة'], ['Brazil', 'البرازيل']
   ];
   const cName = en => { const c = COUNTRIES.find(x => x[0] === en); return c ? (L() === 'ar' ? c[1] : c[0]) : (en || '—'); };
   const VB = 'visa_bookings', VH = 'visa_hotels', VS = 'visa_settings';
