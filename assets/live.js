@@ -71,9 +71,9 @@
 
   /* ---------- Action queue ---------- */
   function queue(all) {
-    const open = all.filter(o => !['paid', 'vouchered', 'cancelled'].includes(o.status));
+    const open = all.filter(o => !['paid', 'vouchered', 'cancelled'].includes(o.status) && Date.now() - created(o) < 7 * 864e5);
     const late = typeof dspState === 'function' ? open.filter(o => { try { return dspState(o).cls === 'late'; } catch (e) { return false; } }) : [];
-    const groups = [['q_staff', open.filter(o => STAFF.includes(o.status)), COL.staff], ['q_fail', open.filter(o => FAIL.includes(o.status)), COL.fail], ['q_pay', open.filter(o => o.status === 'payment_pending'), '#C9962B'], ['q_late', late.filter(o => !STAFF.includes(o.status) && !FAIL.includes(o.status)), '#7C8A87']];
+    const groups = [['q_staff', open.filter(o => STAFF.includes(o.status)), COL.staff], ['q_fail', open.filter(o => FAIL.includes(o.status)), COL.fail], ['q_pay', open.filter(o => o.status === 'payment_pending'), '#C9962B'], ['q_late', late.filter(o => !STAFF.includes(o.status) && !FAIL.includes(o.status) && Date.now() - created(o) < 864e5), '#7C8A87']];
     const total = groups.reduce((a, g) => a + g[1].length, 0);
     const row = o => `<button class="cc-qi" data-act="lvOpen" data-v="${esc(o.request_id || '')}"><div class="grow"><b>${esc(o.hotel || (dspCityOf(o) ? dspCityName(dspCityOf(o)) : '') || fmtPhone(o.sender))}</b><span>${esc(reqText(o.request_text).split('\n')[0].slice(0, 54))}</span></div><span class="cc-age">${opsTime(o.updated_at)}</span></button>`;
     return `<div class="card cc-queue"><div class="cc-h"><div><b>${t('q_title')}</b><div class="tiny muted">${t('q_sub')}</div></div><span class="cc-badge ${total ? 'hot' : ''}">${total}</span></div>
@@ -168,7 +168,7 @@
     const LL = window.LeafletLib; if (!LV.map) return; if (LV.base) LV.base.forEach(l => LV.map.removeLayer(l));
     LV.base = LV.style === 'sat'
       ? [LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Imagery © Esri' }), LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, opacity: .8 })]
-      : [LL.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '© OpenStreetMap © CARTO' })];
+      : [LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, attribution: 'Tiles © Esri' }), LL.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16, opacity: .9 })];
     LV.base.forEach(l => l.addTo(LV.map).bringToBack());
   }
   function draw() {
