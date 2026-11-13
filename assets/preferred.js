@@ -3,7 +3,7 @@
   if (typeof ROUTES === 'undefined') return;
   const AR = {
     nav_preferred: ['Preferred hotels', 'الفنادق المفضلة'],
-    phSub: ['6 active hotels per city: 2 four-star and 4 five-star, ranked 1–6. Upload your CSV to replace the selected cities.', '6 فنادق مفعّلة لكل مدينة: 2 أربع نجوم و4 خمس نجوم، بترتيب 1–6. ارفع ملف CSV لاستبدال اختيارات المدن الموجودة فيه.'],
+    phSub: ['City-centre 4-star hotels come first: 2 four-star choices, followed by 4 five-star choices. Upload 6 hotels per city.', 'الأولوية لفنادق 4 نجوم في وسط المدينة: خياران أولًا، ثم 4 فنادق 5 نجوم. ارفع 6 فنادق لكل مدينة.'],
     phAdd: ['Add hotel', 'إضافة فندق'], phEdit: ['Edit hotel', 'تعديل فندق'], phImport: ['Import CSV', 'استيراد CSV'], phExport: ['Export', 'تصدير'],
     phTemplate: ['CSV template', 'نموذج CSV'], phCountry: ['Country', 'الدولة'], phCity: ['City', 'المدينة'], phHotel: ['Hotel', 'الفندق'],
     phPriority: ['Priority', 'الأولوية'], phStars: ['Stars', 'النجوم'], phNotes: ['Notes (internal)', 'ملاحظات (داخلية)'], phActive: ['Active', 'مفعّل'],
@@ -46,14 +46,20 @@
       <button class="btn ${PHARCH ? 'primary' : ''}" data-act="phArchived">${L() === 'ar' ? (PHARCH ? 'إخفاء الموقوفة' : 'عرض الموقوفة') : (PHARCH ? 'Hide archived' : 'Show archived')}</button>
       ${edit ? `<label class="btn" style="cursor:pointer">${ic('upload', 'sm')} ${t('phImport')}<input type="file" id="ph-file" accept=".csv,text/csv" style="display:none"></label>
       <button class="btn primary" data-act="phNew">${ic('plus', 'sm')} ${t('phAdd')}</button>` : ''}</div>`;
-    return head(btns) + `
+    const oldCities = cities.filter(c => { const a=PH.filter(h=>h.city===c&&h.active!==false);return a.length!==6||a.filter(h=>h.stars===4).length!==2||a.filter(h=>h.stars===5).length!==4; }).length;
+    return head(btns) + `<section class="card" style="padding:20px;margin-bottom:18px;border-inline-start:4px solid var(--brand)">
+      <h2 style="font-size:18px;margin:0 0 12px">${L()==='ar'?'الأولوية: 4 نجوم في وسط المدينة':'First choice: city-centre 4-star hotels'}</h2>
+      <div class="grid g2"><div style="padding:14px;border-radius:12px;background:var(--brand-soft,#ede9f5)"><b>${L()==='ar'?'الخياران 1 و2 · 4 نجوم':'Choices 1 & 2 · 4 stars'}</b><p class="small" style="margin:6px 0 0">${L()==='ar'?'اختر فندقين 4 نجوم في وسط المدينة. ضع المنطقة في الملاحظات.':'Choose two 4-star hotels in the city centre. Add the neighbourhood in notes.'}</p></div><div style="padding:14px;border-radius:12px;background:var(--surface-2,#f3f4f6)"><b>${L()==='ar'?'الخيارات 3 إلى 6 · 5 نجوم':'Choices 3 to 6 · 5 stars'}</b><p class="small" style="margin:6px 0 0">${L()==='ar'?'أربع بدائل 5 نجوم بعد فنادق الأربع نجوم.':'Four 5-star alternatives after the 4-star choices.'}</p></div></div>
+      <p class="small muted" style="margin:12px 0 0">${L()==='ar'?'ارفع الملف بأي ترتيب؛ نرتب الأربع نجوم أولًا تلقائيًا. المدن غير الموجودة بالملف لا تتغير.':'Upload in any order; 4-star hotels are prioritised automatically. Cities outside your file stay unchanged.'}</p>
+      ${oldCities?`<p class="small" style="margin:8px 0 0;color:var(--brand)">${L()==='ar'?oldCities+' مدينة ما زالت على القائمة القديمة؛ تستبدل اختياراتها عند رفع ملفك الجديد.':oldCities+' cities still use the previous list; upload your new file to replace their selections.'}</p>`:''}
+    </section>
     ${PHERR ? `<div class="warn-box" style="margin-bottom:12px">${ic('alert', 'sm')} ${esc(PHERR)}</div>` : ''}
     ${PH.length ? `<div class="row" style="gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
       <input class="inp" id="ph-q" placeholder="${t('phSearch')}" value="${esc(PHQ)}" style="max-width:280px">
       <span class="small muted">${t('phCount', { n: PH.length, c: cities.length })}</span></div>
       ${cities.length > 1 ? `<div class="chips" style="margin-bottom:12px">${['all', ...cities].map(c => `<button class="chip ${PHF === c ? 'on' : ''}" data-act="phCity" data-val="${esc(c)}">${c === 'all' ? t('phAll') : esc(c)} <span class="n">${c === 'all' ? PH.length : PH.filter(h => h.city === c).length}</span></button>`).join('')}</div>` : ''}` : ''}
     ${!PH.length ? `<div class="card"><p class="muted">${t('phEmpty')}</p></div>` : Object.keys(groups).sort((a, b) => a.localeCompare(b)).map(city => {
-      const rows = groups[city];
+      const rows = groups[city].sort((a,b)=>(a.stars===4?0:a.stars===5?1:2)-(b.stars===4?0:b.stars===5?1:2)||a.priority-b.priority);
       const active = PH.filter(h => h.city === city && h.active !== false), n4 = active.filter(h => h.stars === 4).length, n5 = active.filter(h => h.stars === 5).length;
       const valid = active.length === 6 && n4 === 2 && n5 === 4;
       return `<div class="card" style="padding:4px 6px;margin-bottom:12px"><div style="padding:10px 10px 4px"><b>${esc(city)}</b> <span class="small muted">${esc(rows[0].country || '')}</span> <span class="pill ${valid ? 'st-confirmed' : 'st-draft'}">${active.length}/6 · 4★ ${n4}/2 · 5★ ${n5}/4</span></div>
@@ -80,7 +86,7 @@
         ${f('city', t('phCity'), h.city, 'text', 'placeholder="Jeddah" list="ph-cities"')}
         <div class="span2">${f('hotel', t('phHotel'), h.hotel, 'text', 'placeholder="Hilton Jeddah"')}</div>
         <div class="f"><label for="ph-priority">${t('phPriority')}</label><select class="inp" id="ph-priority">${[1, 2, 3, 4, 5, 6].map(n => `<option ${Number(h.priority || 5) === n ? 'selected' : ''}>${n}</option>`).join('')}</select></div>
-        <div class="f"><label for="ph-stars">${t('phStars')}</label><select class="inp" id="ph-stars"><option value="">—</option>${[5, 4].map(n => `<option value="${n}" ${Number(h.stars) === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select></div>
+        <div class="f"><label for="ph-stars">${t('phStars')}</label><select class="inp" id="ph-stars"><option value="">—</option>${[4, 5].map(n => `<option value="${n}" ${Number(h.stars) === n ? 'selected' : ''}>${'★'.repeat(n)}</option>`).join('')}</select></div>
         <div class="f span2"><label for="ph-notes">${t('phNotes')}</label><input class="inp" id="ph-notes" value="${esc(h.notes || '')}"></div>
         <label class="check span2"><input type="checkbox" id="ph-active" ${h.active !== false ? 'checked' : ''}> ${t('phActive')}</label>
       </div>
@@ -136,7 +142,7 @@
       const stars = Number(digits(get('stars')).replace(/stars?|نجوم|[★☆⭐]/gi, '').trim());
       const priority = get('priority') ? Number(digits(get('priority'))) : group.rows.length + 1;
       if (![4, 5].includes(stars)) errors.push(line + (L() === 'ar' ? 'التصنيف لازم يكون 4 أو 5 نجوم.' : 'Stars must be 4 or 5.'));
-      if (!Number.isInteger(priority) || priority < 1 || priority > 6) errors.push(line + (L() === 'ar' ? 'الأولوية من 1 إلى 6 فقط.' : 'Priority must be from 1 to 6.'));
+      if (!Number.isInteger(priority) || priority < 1 || priority > 10) errors.push(line + (L() === 'ar' ? 'ترتيب الملف يجب أن يكون رقمًا من 1 إلى 10، وسيُعاد ترتيبه تلقائيًا.' : 'Use a rank from 1 to 10; final priority is assigned automatically.'));
       if (country.length > 100 || city.length > 150 || hotel.length > 250 || get('notes').length > 1000) errors.push(line + (L() === 'ar' ? 'النص أطول من الحد المسموح.' : 'A field exceeds the allowed length.'));
       const row = { country, city, hotel, priority, stars, notes: get('notes') || null };
       group.rows.push(row); out.push(row);
@@ -148,9 +154,9 @@
       cityCountries.set(key(g.city), key(g.country));
       const n4 = g.rows.filter(r => r.stars === 4).length, n5 = g.rows.filter(r => r.stars === 5).length;
       if (g.rows.length !== 6 || n4 !== 2 || n5 !== 4) errors.push(g.city + ': ' + (L() === 'ar' ? 'المطلوب 6 فنادق: 2 أربع نجوم و4 خمس نجوم.' : 'Each city needs 6 hotels: 2 four-star and 4 five-star.'));
-      if (new Set(g.rows.map(r => r.priority)).size !== g.rows.length) errors.push(g.city + ': ' + (L() === 'ar' ? 'الأولوية مكررة.' : 'Duplicate priority.'));
+      g.rows.sort((a,b)=>a.stars-b.stars || a.priority-b.priority); g.rows.forEach((r,i)=>{r.priority=i+1;});
     });
-    return { rows: out, errors, groups: [...groups.values()] };
+    return { rows: [...groups.values()].flatMap(g=>g.rows), errors, groups: [...groups.values()] };
   }
   function importError(message) {
     modal(t('phImport'), `<div class="warn-box">${esc(message)}</div>`, `<button class="btn" data-act="closeModal">${t('close') || 'Close'}</button>`);
@@ -165,7 +171,7 @@
       const { data, error } = await Cloud.sb.rpc('wejha_import_preferred', { p_agency: Cloud.agencyId, p_rows: parsed.rows, p_commit: false });
       if (error) throw error;
       PHIMPORT = { rows: parsed.rows, revision: data.revision };
-      modal(L() === 'ar' ? 'معاينة ملف الفنادق' : 'Preview hotel import', `<p>${L() === 'ar' ? 'سيتم اعتماد 6 فنادق لكل مدينة في هذا الملف. الفنادق القديمة غير المختارة ستُوقَف مع الاحتفاظ بها، والمدن غير الموجودة في الملف لن تتغير.' : 'Each city in this file will have 6 active hotels. Previous hotels not selected will be archived, and cities outside this file stay unchanged.'}</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('phCity')}</th><th>4★</th><th>5★</th><th>${L() === 'ar' ? 'إيقاف قديم' : 'Archive'}</th></tr></thead><tbody>${(data.cities || []).map(g => `<tr><td>${esc(g.city)} · ${esc(g.country)}</td><td>2</td><td>4</td><td>${g.archived}</td></tr>`).join('')}</tbody></table></div><p class="small muted">${data.added} ${L() === 'ar' ? 'جديد' : 'new'} · ${data.updated} ${L() === 'ar' ? 'تحديث' : 'updated'}</p>`, `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="phConfirmImport">${L() === 'ar' ? 'اعتماد الملف' : 'Apply file'}</button>`);
+      modal(L() === 'ar' ? 'معاينة ملف الفنادق' : 'Preview hotel import', `<p>${L() === 'ar' ? 'سيتم اعتماد 6 فنادق لكل مدينة؛ الأربع نجوم في 1 و2، والخمس نجوم في 3 إلى 6 تلقائيًا. الفنادق القديمة غير المختارة ستُوقَف مع الاحتفاظ بها، والمدن غير الموجودة في الملف لن تتغير.' : 'Each city will have 6 active hotels: city-centre 4-star selections at ranks 1–2, then 5-star selections at 3–6. Previous hotels not selected will be archived, and cities outside this file stay unchanged.'}</p><div class="tbl-wrap"><table class="tbl"><thead><tr><th>${t('phCity')}</th><th>4★</th><th>5★</th><th>${L() === 'ar' ? 'إيقاف قديم' : 'Archive'}</th></tr></thead><tbody>${(data.cities || []).map(g => `<tr><td>${esc(g.city)} · ${esc(g.country)}</td><td>2</td><td>4</td><td>${g.archived}</td></tr>`).join('')}</tbody></table></div><p class="small muted">${data.added} ${L() === 'ar' ? 'جديد' : 'new'} · ${data.updated} ${L() === 'ar' ? 'تحديث' : 'updated'}</p>`, `<button class="btn" data-act="closeModal">${t('cancel')}</button><button class="btn primary" data-act="phConfirmImport">${L() === 'ar' ? 'اعتماد الملف' : 'Apply file'}</button>`);
     } catch (e) { importError(friendlyErr(e)); }
     finally { PHBUSY = false; }
   }
@@ -187,7 +193,7 @@
   Object.assign(ACT, {
     phConfirmImport: confirmImport,
     phArchived: () => { PHARCH = !PHARCH; rerenderSafe(); },
-    phNew: () => form({ priority: 5, active: true, city: PHF !== 'all' ? PHF : '', country: PHF !== 'all' ? ((PH || []).find(h => h.city === PHF) || {}).country : '' }),
+    phNew: () => form({ priority: 1, stars: 4, active: true, city: PHF !== 'all' ? PHF : '', country: PHF !== 'all' ? ((PH || []).find(h => h.city === PHF) || {}).country : '' }),
     phOpen: el => { const h = (PH || []).find(x => x.id === el.dataset.id); if (h) form({ ...h }); },
     phCity: el => { PHF = el.dataset.val || 'all'; rerenderSafe(); },
     phSave: async () => {
@@ -195,6 +201,7 @@
       const row = { agency_id: Cloud.agencyId, country: v('country') || null, city: v('city'), hotel: v('hotel'), priority: nInt(v('priority'), 1, 6) || 1,
         stars: nInt(v('stars'), 1, 5), notes: v('notes') || null, active: document.getElementById('ph-active').checked };
       if (!row.country || !row.city || !row.hotel || (row.active && ![4,5].includes(row.stars))) { toast(L() === 'ar' ? 'الدولة والمدينة والفندق وتصنيف 4 أو 5 نجوم مطلوبة.' : 'Country, city, hotel and a 4- or 5-star rating are required.'); return; }
+      if(row.active && ((row.stars===4 && row.priority>2)||(row.stars===5 && row.priority<3))) { toast(L()==='ar'?'الأربع نجوم في الأولوية 1 أو 2، والخمس نجوم من 3 إلى 6.':'4-star hotels use ranks 1–2; 5-star hotels use ranks 3–6.'); return; }
       const all = PH || [], same = all.filter(h => h.active !== false && key(h.city) === key(row.city));
       const after = all.filter(h => (!PHE || h.id !== PHE.id) && h.active !== false && key(h.city) === key(row.city)); if(row.active) after.push(row);
       const violations = a => Math.max(0,a.length-6)+Math.max(0,a.filter(h=>h.stars===4).length-2)+Math.max(0,a.filter(h=>h.stars===5).length-4)+a.filter(h=>![4,5].includes(h.stars)).length;
@@ -208,6 +215,7 @@
     phMove: async el => {
       const h = (PH || []).find(x => x.id === el.dataset.id); if (!h) return;
       const rows = PH.filter(x => x.city === h.city); const i = rows.indexOf(h); const o = rows[i + Number(el.dataset.d)]; if (!o) return;
+      if(h.stars!==o.stars) { toast(L()==='ar'?'تظل فنادق الأربع نجوم قبل الخمس نجوم.':'4-star hotels stay ahead of 5-star hotels.'); return; }
       let a = o.priority, b = h.priority; if (a === b) { a = Math.max(1, Math.min(6, h.priority + Number(el.dataset.d))); }
       const r1 = await Cloud.sb.from(T).update({ priority: a }).eq('id', h.id);
       const r2 = a === o.priority ? await Cloud.sb.from(T).update({ priority: b }).eq('id', o.id) : { error: null };
